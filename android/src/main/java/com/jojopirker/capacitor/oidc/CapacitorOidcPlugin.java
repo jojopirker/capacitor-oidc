@@ -3,7 +3,8 @@ package com.jojopirker.capacitor.oidc;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
-import androidx.browser.customtabs.CustomTabsIntent;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.browser.auth.AuthTabIntent;
 import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -24,14 +25,15 @@ public final class CapacitorOidcPlugin extends Plugin {
     private static final String INVALID_CALLBACK = "INVALID_CALLBACK";
     private static final String SECURE_STORAGE_ERROR = "SECURE_STORAGE_ERROR";
 
+    private ActivityResultLauncher<Intent> authLauncher;
     private PluginCall pendingAuthCall;
     private Uri pendingCallback;
-    private boolean browserOpen;
     private TokenVault vault;
 
     @Override
     public void load() {
         vault = new TokenVault(getContext());
+        authLauncher = bridge.registerForActivityResult(new AuthTabIntent.AuthenticateUserResultContract(), this::handleAuthResult);
     }
 
     @PluginMethod
@@ -61,13 +63,17 @@ public final class CapacitorOidcPlugin extends Plugin {
             return;
         }
 
-        CustomTabsIntent customTab = new CustomTabsIntent.Builder().setShareState(CustomTabsIntent.SHARE_STATE_OFF).build();
+        boolean ephemeral = Boolean.TRUE.equals(call.getBoolean("prefersEphemeralWebBrowserSession", false));
+        AuthTabIntent authTab = new AuthTabIntent.Builder().setEphemeralBrowsingEnabled(ephemeral).build();
         pendingAuthCall = call;
         pendingCallback = callback;
-        browserOpen = true;
 
         try {
-            customTab.launchUrl(getContext(), url);
+            if ("https".equalsIgnoreCase(callback.getScheme())) {
+                authTab.launch(authLauncher, url, callback.getHost(), path(callback));
+            } else {
+                authTab.launch(authLauncher, url, callback.getScheme());
+            }
         } catch (ActivityNotFoundException | IllegalStateException error) {
             clearPendingAuth();
             call.reject("No compatible system browser is available.", BROWSER_UNAVAILABLE);
@@ -92,14 +98,6 @@ public final class CapacitorOidcPlugin extends Plugin {
         JSObject response = new JSObject();
         response.put("url", callback.toString());
         call.resolve(response);
-    }
-
-    @Override
-    protected void handleOnResume() {
-        if (!browserOpen) return;
-        PluginCall call = pendingAuthCall;
-        clearPendingAuth();
-        if (call != null) call.reject("The authentication session was cancelled.", USER_CANCELLED);
     }
 
     @PluginMethod
@@ -175,10 +173,33 @@ public final class CapacitorOidcPlugin extends Plugin {
         }
     }
 
+    private void handleAuthResult(AuthTabIntent.AuthResult result) {
+        PluginCall call = pendingAuthCall;
+        Uri expectedCallback = pendingCallback;
+        clearPendingAuth();
+        if (call == null) return;
+
+        if (result.resultCode == AuthTabIntent.RESULT_CANCELED) {
+            call.reject("The authentication session was cancelled.", USER_CANCELLED);
+            return;
+        }
+        if (result.resultCode != AuthTabIntent.RESULT_OK || result.resultUri == null) {
+            call.reject("The browser did not return a valid callback.", INVALID_CALLBACK);
+            return;
+        }
+        if (!CallbackUriMatcher.matches(result.resultUri, expectedCallback)) {
+            call.reject("The authentication callback does not match the configured redirect URL.", INVALID_CALLBACK);
+            return;
+        }
+
+        JSObject response = new JSObject();
+        response.put("url", result.resultUri.toString());
+        call.resolve(response);
+    }
+
     private void clearPendingAuth() {
         pendingAuthCall = null;
         pendingCallback = null;
-        browserOpen = false;
     }
 
     private static String requiredString(PluginCall call, String name) {
@@ -206,6 +227,11 @@ public final class CapacitorOidcPlugin extends Plugin {
         String scheme = uri.getScheme();
         if (scheme == null || scheme.isEmpty() || "http".equalsIgnoreCase(scheme)) return false;
         return !"https".equalsIgnoreCase(scheme) || uri.getHost() != null;
+    }
+
+    private static String path(Uri uri) {
+        String path = uri.getPath();
+        return path == null ? "" : path;
     }
 
     private static void resolveValue(PluginCall call, String value) {
