@@ -34,7 +34,7 @@
   "scripts": {
     "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
     "clean": "rimraf dist",
-    "lint": "eslint src --ext ts && prettier --check src package.json README.md docs",
+    "lint": "eslint src --ext ts && prettier --check src contracts package.json README.md SECURITY.md docs",
     "prepack": "npm run build",
     "test": "vitest run",
     "verify": "npm run lint && npm run test && npm run build",

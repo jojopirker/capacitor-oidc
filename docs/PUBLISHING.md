@@ -1,9 +1,8 @@
 # Publishing
 
-Automated stable publishing is disabled until the
-[dependency gates](DEPENDENCY_GATES.md) pass. The first bootstrap prerelease may
-be published manually under the `next` tag to create the registry package and
-configure trusted publishing; it is not a production release.
+The first bootstrap prerelease may be published manually under the `next` tag to
+create the registry package and configure trusted publishing. It is not a stable
+release.
 
 The stable release workflow uses npm trusted publishing so GitHub exchanges a
 short-lived OIDC identity for publish access. It does not use an npm token.
@@ -29,7 +28,7 @@ On a package's first-ever publication, npm currently also creates `latest` even
 when `--tag next` is supplied. The registry rejects deleting that only `latest`
 tag with HTTP 400. This is registry bootstrap behavior, not approval for production
 use; keep subsequent prereleases on `next` and do not intentionally move `latest`
-until the dependency gates pass. See [npm/cli#8490](https://github.com/npm/cli/issues/8490).
+until a stable release is approved. See [npm/cli#8490](https://github.com/npm/cli/issues/8490).
 
 ## Configure trusted publishing
 
@@ -59,8 +58,10 @@ The package and workflow settings are case-sensitive. The workflow must exist in
 
 Create the `npm-production` GitHub environment and add a required reviewer. Do not
 add `NPM_TOKEN` or another publishing secret. Leave the repository variable
-`NPM_PUBLISH_ENABLED` absent or set to `false` until the dependency gates pass and
-the trusted publisher is configured. Set it to `true` to enable publishing.
+`NPM_PUBLISH_ENABLED` absent or set to `false` until the trusted publisher is
+configured and the requirements in [Security](../SECURITY.md) and
+[Testing](TESTING.md) are satisfied. Set it to `true` only for an approved stable
+release.
 
 ## Publish a release
 

@@ -235,13 +235,12 @@ Keep adapter errors small and stable:
 
 OIDC and OAuth server errors remain `oidc-client-ts` errors.
 
-## Dependency gates
+## Security assumptions
 
-Do not publish a production version until both gates pass:
+The JavaScript runtime must provide `crypto.subtle` and `crypto.getRandomValues`.
+The selected OIDC engine must validate the required ID-token issuer, audience, and
+expiration claims. Current limitations and the stable-release decision are
+recorded in [`SECURITY.md`](SECURITY.md).
 
-1. `crypto.subtle` works in packaged iOS and Android Capacitor WebViews.
-2. The selected `oidc-client-ts` version correctly validates required ID-token
-   issuer, audience, and expiration claims, or an upstream fix has been adopted.
-
-Do not add crypto or validation workarounds to this package merely to make either
-gate pass. Reconsider the protocol engine instead.
+Do not add package-local crypto or JWT validation to compensate for a protocol
+engine limitation. Reconsider the engine instead.
