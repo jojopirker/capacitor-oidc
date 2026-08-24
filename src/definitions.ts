@@ -9,13 +9,13 @@ export type CapacitorOidcErrorCode =
   | 'UNSUPPORTED_RUNTIME';
 
 export interface IOSNativeOptions {
-  prefersEphemeralWebBrowserSession?: boolean;
   keychainAccessGroup?: string;
   keychainAccessibility?: 'afterFirstUnlockThisDeviceOnly' | 'whenUnlockedThisDeviceOnly';
 }
 
 export interface CapacitorOidcNativeOptions {
   ios?: IOSNativeOptions;
+  prefersEphemeralWebBrowserSession?: boolean;
   storageNamespace?: string;
 }
 
