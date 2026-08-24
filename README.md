@@ -3,7 +3,7 @@
 A small native Capacitor adapter for [`oidc-client-ts`](https://github.com/authts/oidc-client-ts).
 
 > [!WARNING]
-> This package is not ready for production use. `oidc-client-ts` 3.5.0 does not validate the required ID-token `iss`, `aud`, and `exp` claims.
+> This package is not ready for production use. `oidc-client-ts` 3.5.0 does not validate the required ID-token `iss`, `aud`, and `exp` claims. See [Security](SECURITY.md).
 
 The package keeps OAuth and OpenID Connect in `oidc-client-ts`. Its native code only presents system authentication UI and stores state securely:
 
@@ -82,7 +82,7 @@ Calling `cancel()` on Android rejects the pending JavaScript promise, but Androi
 
 ## Secure storage and widgets
 
-`userStore` and transaction `stateStore` are separate secure namespaces. Each successful user write also updates a versioned native `StoredSessionV1` snapshot.
+`userStore` and transaction `stateStore` are separate secure namespaces. Each successful user write also updates a versioned native `StoredSessionV1` snapshot. The snapshot is an eventually consistent widget cache, not the canonical OIDC session.
 
 An iOS app and WidgetKit extension can construct the public `TokenVault` with the same Keychain access group:
 
@@ -124,7 +124,7 @@ npm run verify:ios
 npm run verify:android
 ```
 
-Physical-device verification remains required for Web Crypto, system consent UI, redirects, and shared widget access before a production release.
+Physical-device verification remains required for Web Crypto, system consent UI, redirects, and shared widget access before a production release. See [Testing](docs/TESTING.md) for the full matrix.
 
 See [Publishing](docs/PUBLISHING.md) for the guarded npm trusted-publishing setup and release process.
 

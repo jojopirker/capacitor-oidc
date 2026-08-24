@@ -10,10 +10,10 @@ lifecycle behavior.
 
 ## Constraints
 
-- The package must pass the secure-context and ID-token-validation gates recorded
-  in `ARCHITECTURE.md` before production release.
+- The pinned engine's known behavior and runtime assumptions are recorded in
+  [`SECURITY.md`](../../SECURITY.md).
 - We do not fork `oidc-client-ts` or duplicate its protocol implementation to work
-  around a failed gate. A failed gate reopens this decision.
+  around a missing security property. A missing property reopens this decision.
 
 ## Consequences
 

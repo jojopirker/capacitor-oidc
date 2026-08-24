@@ -54,7 +54,7 @@
 - [ ] Concurrent renewal triggers share one request.
 - [ ] Returning to the foreground refreshes an expired or nearly expired token.
 - [ ] `getValidUser()` returns a sufficiently valid user or performs one refresh.
-- [ ] Refresh-token rotation is persisted atomically.
+- [ ] Refresh-token rotation is persisted atomically in the canonical user record.
 - [ ] Temporary network failure retains the stored session.
 - [ ] Logout stops renewal and removes local state.
 
