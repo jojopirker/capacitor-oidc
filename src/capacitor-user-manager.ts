@@ -28,7 +28,7 @@ export class CapacitorUserManager extends UserManager {
   ) {
     const stateStore = new CapacitorSecureStateStore(`${storageNamespace}.transactions`);
     const userStore = new CapacitorSecureStateStore(`${storageNamespace}.session`);
-    const navigator = new CapacitorNavigator(nativeOptions.ios?.prefersEphemeralWebBrowserSession ?? false);
+    const navigator = new CapacitorNavigator(nativeOptions.prefersEphemeralWebBrowserSession ?? false);
 
     super(
       {
