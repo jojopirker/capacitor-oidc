@@ -5,16 +5,16 @@ import Foundation
 @objc(CapacitorOidcPlugin)
 public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding {
     public let identifier = "CapacitorOidcPlugin"
-    public let jsName = "CapacitorOidc"
+    public let jsName = NativeContract.pluginName
     public let pluginMethods: [CAPPluginMethod] = [
-        CAPPluginMethod(name: "configure", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "open", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "cancel", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "storageSet", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "storageGet", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "storageRemove", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "storageGetAllKeys", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "setSessionSnapshot", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: NativeContract.Method.configure, returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: NativeContract.Method.open, returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: NativeContract.Method.cancel, returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: NativeContract.Method.storageSet, returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: NativeContract.Method.storageGet, returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: NativeContract.Method.storageRemove, returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: NativeContract.Method.storageGetAllKeys, returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: NativeContract.Method.setSessionSnapshot, returnType: CAPPluginReturnPromise)
     ]
 
     private var accessGroup: String?
@@ -23,8 +23,8 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
     private var authenticationCall: CAPPluginCall?
 
     @objc public func configure(_ call: CAPPluginCall) {
-        accessGroup = call.getString("keychainAccessGroup")
-        if call.getString("keychainAccessibility") == "whenUnlockedThisDeviceOnly" {
+        accessGroup = call.getString(NativeContract.Field.keychainAccessGroup)
+        if call.getString(NativeContract.Field.keychainAccessibility) == NativeContract.KeychainAccessibility.whenUnlockedThisDeviceOnly {
             accessibility = .whenUnlockedThisDeviceOnly
         } else {
             accessibility = .afterFirstUnlockThisDeviceOnly
@@ -34,17 +34,17 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
 
     @objc public func open(_ call: CAPPluginCall) {
         guard authenticationSession == nil else {
-            call.reject("An authentication session is already active", "AUTH_SESSION_IN_PROGRESS")
+            call.reject("An authentication session is already active", NativeContract.ErrorCode.authSessionInProgress)
             return
         }
-        guard let urlValue = call.getString("url"), let url = URL(string: urlValue),
-              let callbackValue = call.getString("callbackUrl"), let callbackURL = URL(string: callbackValue),
+        guard let urlValue = call.getString(NativeContract.Field.url), let url = URL(string: urlValue),
+              let callbackValue = call.getString(NativeContract.Field.callbackUrl), let callbackURL = URL(string: callbackValue),
               let scheme = callbackURL.scheme else {
-            call.reject("The authentication URL or callback URL is invalid", "INVALID_CALLBACK")
+            call.reject("The authentication URL or callback URL is invalid", NativeContract.ErrorCode.invalidCallback)
             return
         }
         guard isSecureRequestURL(url) else {
-            call.reject("The authentication URL must use HTTPS outside loopback development", "BROWSER_UNAVAILABLE")
+            call.reject("The authentication URL must use HTTPS outside loopback development", NativeContract.ErrorCode.browserUnavailable)
             return
         }
 
@@ -55,7 +55,7 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
         let session: ASWebAuthenticationSession
         if #available(iOS 17.4, *), scheme.lowercased() == "https" {
             guard let host = callbackURL.host else {
-                call.reject("The HTTPS callback URL has no host", "INVALID_CALLBACK")
+                call.reject("The HTTPS callback URL has no host", NativeContract.ErrorCode.invalidCallback)
                 return
             }
             session = ASWebAuthenticationSession(
@@ -65,20 +65,20 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
             )
         } else {
             guard scheme.lowercased() != "https" else {
-                call.reject("HTTPS callbacks require iOS 17.4 or newer", "BROWSER_UNAVAILABLE")
+                call.reject("HTTPS callbacks require iOS 17.4 or newer", NativeContract.ErrorCode.browserUnavailable)
                 return
             }
             session = ASWebAuthenticationSession(url: url, callbackURLScheme: scheme, completionHandler: completion)
         }
 
         session.presentationContextProvider = self
-        session.prefersEphemeralWebBrowserSession = call.getBool("prefersEphemeralWebBrowserSession") ?? false
+        session.prefersEphemeralWebBrowserSession = call.getBool(NativeContract.Field.prefersEphemeralWebBrowserSession) ?? false
         authenticationCall = call
         authenticationSession = session
         guard session.start() else {
             authenticationCall = nil
             authenticationSession = nil
-            call.reject("The system authentication session could not start", "BROWSER_UNAVAILABLE")
+            call.reject("The system authentication session could not start", NativeContract.ErrorCode.browserUnavailable)
             return
         }
     }
@@ -89,50 +89,50 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
         authenticationCall = nil
         authenticationSession = nil
         activeSession?.cancel()
-        activeCall?.reject("The user cancelled authentication", "USER_CANCELLED")
+        activeCall?.reject("The user cancelled authentication", NativeContract.ErrorCode.userCancelled)
         call.resolve()
     }
 
     @objc public func storageSet(_ call: CAPPluginCall) {
-        guard let namespace = call.getString("namespace"), let key = call.getString("key"),
-              let value = call.getString("value") else {
-            call.reject("Storage input is invalid", "SECURE_STORAGE_ERROR")
+        guard let namespace = call.getString(NativeContract.Field.namespace), let key = call.getString(NativeContract.Field.key),
+              let value = call.getString(NativeContract.Field.value) else {
+            call.reject("Storage input is invalid", NativeContract.ErrorCode.secureStorageError)
             return
         }
         resolveStorage(call) { try vault().set(namespace: namespace, key: key, value: value); return [:] }
     }
 
     @objc public func storageGet(_ call: CAPPluginCall) {
-        guard let namespace = call.getString("namespace"), let key = call.getString("key") else {
-            call.reject("Storage input is invalid", "SECURE_STORAGE_ERROR")
+        guard let namespace = call.getString(NativeContract.Field.namespace), let key = call.getString(NativeContract.Field.key) else {
+            call.reject("Storage input is invalid", NativeContract.ErrorCode.secureStorageError)
             return
         }
-        resolveStorage(call) { ["value": try vault().get(namespace: namespace, key: key) as Any] }
+        resolveStorage(call) { [NativeContract.Field.value: try vault().get(namespace: namespace, key: key) as Any] }
     }
 
     @objc public func storageRemove(_ call: CAPPluginCall) {
-        guard let namespace = call.getString("namespace"), let key = call.getString("key") else {
-            call.reject("Storage input is invalid", "SECURE_STORAGE_ERROR")
+        guard let namespace = call.getString(NativeContract.Field.namespace), let key = call.getString(NativeContract.Field.key) else {
+            call.reject("Storage input is invalid", NativeContract.ErrorCode.secureStorageError)
             return
         }
-        resolveStorage(call) { ["value": try vault().remove(namespace: namespace, key: key) as Any] }
+        resolveStorage(call) { [NativeContract.Field.value: try vault().remove(namespace: namespace, key: key) as Any] }
     }
 
     @objc public func storageGetAllKeys(_ call: CAPPluginCall) {
-        guard let namespace = call.getString("namespace") else {
-            call.reject("Storage input is invalid", "SECURE_STORAGE_ERROR")
+        guard let namespace = call.getString(NativeContract.Field.namespace) else {
+            call.reject("Storage input is invalid", NativeContract.ErrorCode.secureStorageError)
             return
         }
-        resolveStorage(call) { ["keys": try vault().getAllKeys(namespace: namespace)] }
+        resolveStorage(call) { [NativeContract.Field.keys: try vault().getAllKeys(namespace: namespace)] }
     }
 
     @objc public func setSessionSnapshot(_ call: CAPPluginCall) {
-        guard let namespace = call.getString("namespace") else {
-            call.reject("Storage input is invalid", "SECURE_STORAGE_ERROR")
+        guard let namespace = call.getString(NativeContract.Field.namespace) else {
+            call.reject("Storage input is invalid", NativeContract.ErrorCode.secureStorageError)
             return
         }
         resolveStorage(call) {
-            try vault().setSessionSnapshot(namespace: namespace, value: call.getString("value"))
+            try vault().setSessionSnapshot(namespace: namespace, value: call.getString(NativeContract.Field.value))
             return [:]
         }
     }
@@ -147,13 +147,13 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
         authenticationSession = nil
 
         if let sessionError = error as? ASWebAuthenticationSessionError, sessionError.code == .canceledLogin {
-            call?.reject("The user cancelled authentication", "USER_CANCELLED")
+            call?.reject("The user cancelled authentication", NativeContract.ErrorCode.userCancelled)
         } else if error != nil {
-            call?.reject("The system authentication session failed", "BROWSER_UNAVAILABLE")
+            call?.reject("The system authentication session failed", NativeContract.ErrorCode.browserUnavailable)
         } else if let callbackURL {
-            call?.resolve(["url": callbackURL.absoluteString])
+            call?.resolve([NativeContract.Field.url: callbackURL.absoluteString])
         } else {
-            call?.reject("The authentication session returned no callback", "INVALID_CALLBACK")
+            call?.reject("The authentication session returned no callback", NativeContract.ErrorCode.invalidCallback)
         }
     }
 
@@ -171,7 +171,7 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
         do {
             call.resolve(try operation())
         } catch {
-            call.reject("Secure storage failed", "SECURE_STORAGE_ERROR")
+            call.reject("Secure storage failed", NativeContract.ErrorCode.secureStorageError)
         }
     }
 }

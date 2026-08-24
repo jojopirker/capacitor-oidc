@@ -1,6 +1,7 @@
 import type { INavigator, IWindow, NavigateParams, NavigateResponse } from 'oidc-client-ts';
 
 import { CapacitorOidcError, unsupported } from './errors';
+import { nativeContract } from './generated/native-contract';
 import { NativeOidc } from './native';
 
 export class CapacitorNavigator implements INavigator {
@@ -22,19 +23,19 @@ class CapacitorWindow implements IWindow {
     assertSecureRequestUrl(url);
     const callbackUrl = callbackUrlFromRequest(url);
     const response = await NativeOidc.open({
-      url,
-      callbackUrl,
-      prefersEphemeralWebBrowserSession: this.prefersEphemeralWebBrowserSession,
+      [nativeContract.fields.url]: url,
+      [nativeContract.fields.callbackUrl]: callbackUrl,
+      [nativeContract.fields.prefersEphemeralWebBrowserSession]: this.prefersEphemeralWebBrowserSession,
     });
 
-    if (!isExpectedCallback(response.url, callbackUrl)) {
+    if (!isExpectedCallback(response[nativeContract.fields.url], callbackUrl)) {
       throw new CapacitorOidcError(
-        'INVALID_CALLBACK',
+        nativeContract.errorCodes.invalidCallback,
         'The authentication callback does not match the configured redirect URI',
       );
     }
 
-    return response;
+    return { url: response[nativeContract.fields.url] };
   }
 
   close(): void {
@@ -46,7 +47,10 @@ export function assertSecureRequestUrl(requestUrl: string): void {
   const url = new URL(requestUrl);
   const isLocalDevelopment = url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '[::1]';
   if (url.protocol !== 'https:' && !isLocalDevelopment) {
-    throw new CapacitorOidcError('BROWSER_UNAVAILABLE', 'OIDC authorization and logout endpoints must use HTTPS');
+    throw new CapacitorOidcError(
+      nativeContract.errorCodes.browserUnavailable,
+      'OIDC authorization and logout endpoints must use HTTPS',
+    );
   }
 }
 
@@ -54,7 +58,10 @@ export function callbackUrlFromRequest(requestUrl: string): string {
   const url = new URL(requestUrl);
   const callback = url.searchParams.get('redirect_uri') ?? url.searchParams.get('post_logout_redirect_uri');
   if (!callback) {
-    throw new CapacitorOidcError('INVALID_CALLBACK', 'The OIDC request does not contain a redirect URI');
+    throw new CapacitorOidcError(
+      nativeContract.errorCodes.invalidCallback,
+      'The OIDC request does not contain a redirect URI',
+    );
   }
   return callback;
 }

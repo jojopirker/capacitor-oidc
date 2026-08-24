@@ -1,12 +1,8 @@
 import type { UserManagerSettings } from 'oidc-client-ts';
 
-export type CapacitorOidcErrorCode =
-  | 'AUTH_SESSION_IN_PROGRESS'
-  | 'USER_CANCELLED'
-  | 'BROWSER_UNAVAILABLE'
-  | 'INVALID_CALLBACK'
-  | 'SECURE_STORAGE_ERROR'
-  | 'UNSUPPORTED_RUNTIME';
+import type { NativeErrorCode } from './generated/native-contract';
+
+export type CapacitorOidcErrorCode = NativeErrorCode;
 
 export interface IOSNativeOptions {
   prefersEphemeralWebBrowserSession?: boolean;

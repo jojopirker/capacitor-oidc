@@ -16,14 +16,8 @@ import java.security.GeneralSecurityException;
 import java.util.List;
 import org.json.JSONObject;
 
-@CapacitorPlugin(name = "CapacitorOidc")
+@CapacitorPlugin(name = NativeContract.PLUGIN_NAME)
 public final class CapacitorOidcPlugin extends Plugin {
-
-    private static final String AUTH_SESSION_IN_PROGRESS = "AUTH_SESSION_IN_PROGRESS";
-    private static final String USER_CANCELLED = "USER_CANCELLED";
-    private static final String BROWSER_UNAVAILABLE = "BROWSER_UNAVAILABLE";
-    private static final String INVALID_CALLBACK = "INVALID_CALLBACK";
-    private static final String SECURE_STORAGE_ERROR = "SECURE_STORAGE_ERROR";
 
     private ActivityResultLauncher<Intent> authLauncher;
     private PluginCall pendingAuthCall;
@@ -44,26 +38,26 @@ public final class CapacitorOidcPlugin extends Plugin {
     @PluginMethod
     public void open(PluginCall call) {
         if (pendingAuthCall != null) {
-            call.reject("An authentication session is already active.", AUTH_SESSION_IN_PROGRESS);
+            call.reject("An authentication session is already active.", NativeContract.ERROR_AUTH_SESSION_IN_PROGRESS);
             return;
         }
 
-        String urlValue = requiredString(call, "url");
-        String callbackValue = requiredString(call, "callbackUrl");
+        String urlValue = requiredString(call, NativeContract.FIELD_URL);
+        String callbackValue = requiredString(call, NativeContract.FIELD_CALLBACK_URL);
         if (urlValue == null || callbackValue == null) return;
 
         Uri url = Uri.parse(urlValue);
         Uri callback = Uri.parse(callbackValue);
         if (!isSecureRequestUrl(url)) {
-            call.reject("The authentication URL must use HTTPS outside loopback development.", BROWSER_UNAVAILABLE);
+            call.reject("The authentication URL must use HTTPS outside loopback development.", NativeContract.ERROR_BROWSER_UNAVAILABLE);
             return;
         }
         if (!isSupportedCallback(callback)) {
-            call.reject("The callback URL must use HTTPS or a custom scheme.", INVALID_CALLBACK);
+            call.reject("The callback URL must use HTTPS or a custom scheme.", NativeContract.ERROR_INVALID_CALLBACK);
             return;
         }
 
-        boolean ephemeral = Boolean.TRUE.equals(call.getBoolean("prefersEphemeralWebBrowserSession", false));
+        boolean ephemeral = Boolean.TRUE.equals(call.getBoolean(NativeContract.FIELD_PREFERS_EPHEMERAL_WEB_BROWSER_SESSION, false));
         AuthTabIntent authTab = new AuthTabIntent.Builder().setEphemeralBrowsingEnabled(ephemeral).build();
         pendingAuthCall = call;
         pendingCallback = callback;
@@ -76,7 +70,7 @@ public final class CapacitorOidcPlugin extends Plugin {
             }
         } catch (ActivityNotFoundException | IllegalStateException error) {
             clearPendingAuth();
-            call.reject("No compatible system browser is available.", BROWSER_UNAVAILABLE);
+            call.reject("No compatible system browser is available.", NativeContract.ERROR_BROWSER_UNAVAILABLE);
         }
     }
 
@@ -84,7 +78,7 @@ public final class CapacitorOidcPlugin extends Plugin {
     public void cancel(PluginCall call) {
         PluginCall authCall = pendingAuthCall;
         clearPendingAuth();
-        if (authCall != null) authCall.reject("The authentication session was cancelled.", USER_CANCELLED);
+        if (authCall != null) authCall.reject("The authentication session was cancelled.", NativeContract.ERROR_USER_CANCELLED);
         call.resolve();
     }
 
@@ -96,15 +90,15 @@ public final class CapacitorOidcPlugin extends Plugin {
 
         clearPendingAuth();
         JSObject response = new JSObject();
-        response.put("url", callback.toString());
+        response.put(NativeContract.FIELD_URL, callback.toString());
         call.resolve(response);
     }
 
     @PluginMethod
     public void storageSet(PluginCall call) {
-        String namespace = requiredString(call, "namespace");
-        String key = requiredString(call, "key");
-        String value = call.getString("value");
+        String namespace = requiredString(call, NativeContract.FIELD_NAMESPACE);
+        String key = requiredString(call, NativeContract.FIELD_KEY);
+        String value = call.getString(NativeContract.FIELD_VALUE);
         if (namespace == null || key == null) return;
         if (value == null) {
             call.reject("value is required.");
@@ -121,8 +115,8 @@ public final class CapacitorOidcPlugin extends Plugin {
 
     @PluginMethod
     public void storageGet(PluginCall call) {
-        String namespace = requiredString(call, "namespace");
-        String key = requiredString(call, "key");
+        String namespace = requiredString(call, NativeContract.FIELD_NAMESPACE);
+        String key = requiredString(call, NativeContract.FIELD_KEY);
         if (namespace == null || key == null) return;
 
         try {
@@ -134,8 +128,8 @@ public final class CapacitorOidcPlugin extends Plugin {
 
     @PluginMethod
     public void storageRemove(PluginCall call) {
-        String namespace = requiredString(call, "namespace");
-        String key = requiredString(call, "key");
+        String namespace = requiredString(call, NativeContract.FIELD_NAMESPACE);
+        String key = requiredString(call, NativeContract.FIELD_KEY);
         if (namespace == null || key == null) return;
 
         try {
@@ -147,13 +141,13 @@ public final class CapacitorOidcPlugin extends Plugin {
 
     @PluginMethod
     public void storageGetAllKeys(PluginCall call) {
-        String namespace = requiredString(call, "namespace");
+        String namespace = requiredString(call, NativeContract.FIELD_NAMESPACE);
         if (namespace == null) return;
 
         try {
             List<String> keys = vault.getAllKeys(namespace);
             JSObject result = new JSObject();
-            result.put("keys", new JSArray(keys));
+            result.put(NativeContract.FIELD_KEYS, new JSArray(keys));
             call.resolve(result);
         } catch (GeneralSecurityException | IOException error) {
             rejectStorage(call);
@@ -162,11 +156,11 @@ public final class CapacitorOidcPlugin extends Plugin {
 
     @PluginMethod
     public void setSessionSnapshot(PluginCall call) {
-        String namespace = requiredString(call, "namespace");
+        String namespace = requiredString(call, NativeContract.FIELD_NAMESPACE);
         if (namespace == null) return;
 
         try {
-            vault.setSessionSnapshot(namespace, call.getString("value"));
+            vault.setSessionSnapshot(namespace, call.getString(NativeContract.FIELD_VALUE));
             call.resolve();
         } catch (GeneralSecurityException | IOException error) {
             rejectStorage(call);
@@ -180,20 +174,20 @@ public final class CapacitorOidcPlugin extends Plugin {
         if (call == null) return;
 
         if (result.resultCode == AuthTabIntent.RESULT_CANCELED) {
-            call.reject("The authentication session was cancelled.", USER_CANCELLED);
+            call.reject("The authentication session was cancelled.", NativeContract.ERROR_USER_CANCELLED);
             return;
         }
         if (result.resultCode != AuthTabIntent.RESULT_OK || result.resultUri == null) {
-            call.reject("The browser did not return a valid callback.", INVALID_CALLBACK);
+            call.reject("The browser did not return a valid callback.", NativeContract.ERROR_INVALID_CALLBACK);
             return;
         }
         if (!CallbackUriMatcher.matches(result.resultUri, expectedCallback)) {
-            call.reject("The authentication callback does not match the configured redirect URL.", INVALID_CALLBACK);
+            call.reject("The authentication callback does not match the configured redirect URL.", NativeContract.ERROR_INVALID_CALLBACK);
             return;
         }
 
         JSObject response = new JSObject();
-        response.put("url", result.resultUri.toString());
+        response.put(NativeContract.FIELD_URL, result.resultUri.toString());
         call.resolve(response);
     }
 
@@ -236,11 +230,11 @@ public final class CapacitorOidcPlugin extends Plugin {
 
     private static void resolveValue(PluginCall call, String value) {
         JSObject result = new JSObject();
-        result.put("value", value == null ? JSONObject.NULL : value);
+        result.put(NativeContract.FIELD_VALUE, value == null ? JSONObject.NULL : value);
         call.resolve(result);
     }
 
     private static void rejectStorage(PluginCall call) {
-        call.reject("Secure storage failed.", SECURE_STORAGE_ERROR);
+        call.reject("Secure storage failed.", NativeContract.ERROR_SECURE_STORAGE_ERROR);
     }
 }

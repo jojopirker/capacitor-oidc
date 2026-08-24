@@ -1,0 +1,36 @@
+{
+  "pluginName": "CapacitorOidc",
+  "methods": {
+    "configure": "configure",
+    "open": "open",
+    "cancel": "cancel",
+    "storageSet": "storageSet",
+    "storageGet": "storageGet",
+    "storageRemove": "storageRemove",
+    "storageGetAllKeys": "storageGetAllKeys",
+    "setSessionSnapshot": "setSessionSnapshot"
+  },
+  "fields": {
+    "url": "url",
+    "callbackUrl": "callbackUrl",
+    "prefersEphemeralWebBrowserSession": "prefersEphemeralWebBrowserSession",
+    "keychainAccessGroup": "keychainAccessGroup",
+    "keychainAccessibility": "keychainAccessibility",
+    "namespace": "namespace",
+    "key": "key",
+    "value": "value",
+    "keys": "keys"
+  },
+  "errorCodes": {
+    "authSessionInProgress": "AUTH_SESSION_IN_PROGRESS",
+    "userCancelled": "USER_CANCELLED",
+    "browserUnavailable": "BROWSER_UNAVAILABLE",
+    "invalidCallback": "INVALID_CALLBACK",
+    "secureStorageError": "SECURE_STORAGE_ERROR",
+    "unsupportedRuntime": "UNSUPPORTED_RUNTIME"
+  },
+  "keychainAccessibility": {
+    "afterFirstUnlockThisDeviceOnly": "afterFirstUnlockThisDeviceOnly",
+    "whenUnlockedThisDeviceOnly": "whenUnlockedThisDeviceOnly"
+  }
+}

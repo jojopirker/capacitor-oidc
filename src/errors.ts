@@ -1,4 +1,5 @@
 import type { CapacitorOidcErrorCode } from './definitions';
+import { nativeContract } from './generated/native-contract';
 
 export class CapacitorOidcError extends Error {
   constructor(
@@ -11,5 +12,8 @@ export class CapacitorOidcError extends Error {
 }
 
 export function unsupported(feature: string): never {
-  throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', `${feature} is not available in a native Capacitor runtime`);
+  throw new CapacitorOidcError(
+    nativeContract.errorCodes.unsupportedRuntime,
+    `${feature} is not available in a native Capacitor runtime`,
+  );
 }

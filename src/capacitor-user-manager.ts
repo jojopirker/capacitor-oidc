@@ -15,6 +15,7 @@ import { CapacitorNavigator, UnsupportedIframeNavigator } from './capacitor-navi
 import { CapacitorSecureStateStore } from './capacitor-secure-state-store';
 import type { CapacitorOidcNativeOptions, CapacitorUserManagerSettings, StoredSessionV1 } from './definitions';
 import { CapacitorOidcError, unsupported } from './errors';
+import { nativeContract } from './generated/native-contract';
 import { NativeOidc } from './native';
 
 export class CapacitorUserManager extends UserManager {
@@ -53,7 +54,11 @@ export class CapacitorUserManager extends UserManager {
   ): Promise<CapacitorUserManager> {
     assertRuntime();
     assertSettings(settings);
-    await NativeOidc.configure(nativeOptions.ios ?? {});
+    await NativeOidc.configure({
+      [nativeContract.fields.prefersEphemeralWebBrowserSession]: nativeOptions.ios?.prefersEphemeralWebBrowserSession,
+      [nativeContract.fields.keychainAccessGroup]: nativeOptions.ios?.keychainAccessGroup,
+      [nativeContract.fields.keychainAccessibility]: nativeOptions.ios?.keychainAccessibility,
+    });
     const manager = new CapacitorUserManager(settings, nativeOptions, nativeOptions.storageNamespace ?? 'default');
     await manager.getValidUser();
     manager.appStateListener = await App.addListener('appStateChange', ({ isActive }) => {
@@ -109,8 +114,10 @@ export class CapacitorUserManager extends UserManager {
   override async storeUser(user: User | null): Promise<void> {
     await super.storeUser(user);
     await NativeOidc.setSessionSnapshot({
-      namespace: this.storageNamespace,
-      value: user ? JSON.stringify(toStoredSession(user, this.settings.authority, this.settings.client_id)) : null,
+      [nativeContract.fields.namespace]: this.storageNamespace,
+      [nativeContract.fields.value]: user
+        ? JSON.stringify(toStoredSession(user, this.settings.authority, this.settings.client_id))
+        : null,
     });
   }
 
@@ -171,17 +178,23 @@ export class CapacitorUserManager extends UserManager {
 
 function assertRuntime(): void {
   if (!globalThis.crypto?.subtle || !globalThis.crypto.getRandomValues) {
-    throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', 'Web Crypto is required by oidc-client-ts');
+    throw new CapacitorOidcError(
+      nativeContract.errorCodes.unsupportedRuntime,
+      'Web Crypto is required by oidc-client-ts',
+    );
   }
 }
 
 function assertSettings(settings: CapacitorUserManagerSettings): void {
   if ('client_secret' in settings) {
-    throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', 'Native public clients must not contain a client secret');
+    throw new CapacitorOidcError(
+      nativeContract.errorCodes.unsupportedRuntime,
+      'Native public clients must not contain a client secret',
+    );
   }
   if ('client_authentication' in settings || 'dpop' in settings) {
     throw new CapacitorOidcError(
-      'UNSUPPORTED_RUNTIME',
+      nativeContract.errorCodes.unsupportedRuntime,
       'The supplied settings contain an unsupported native-client option',
     );
   }
