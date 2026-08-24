@@ -1,4 +1,4 @@
-# @jojopirker/capacitor-oidc
+# capacitor-oidc
 
 A minimal Capacitor adapter for standards-based OpenID Connect authentication.
 
