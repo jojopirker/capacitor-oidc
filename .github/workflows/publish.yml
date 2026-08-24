@@ -48,17 +48,27 @@ jobs:
           }'
       - name: Validate release tag
         env:
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: >-
           node -e
           'const pkg = require("./package.json");
           const expected = "v" + pkg.version;
           const tag = process.env.RELEASE_TAG;
-          if (!/^v\d+\.\d+\.\d+$/.test(tag) || tag !== expected) {
+          const versionIsPrerelease = pkg.version.includes("-");
+          const releaseIsPrerelease = process.env.RELEASE_PRERELEASE === "true";
+          if (!/^v\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(tag) || tag !== expected) {
           console.error("Expected release tag " + expected + ", received " + tag);
+          process.exit(1);
+          }
+          if (versionIsPrerelease !== releaseIsPrerelease) {
+          console.error("GitHub prerelease status must match package version " + pkg.version);
           process.exit(1);
           }'
       - run: npm ci
       - run: npm run verify
       - run: npm pack --dry-run
-      - run: npm publish --access public
+      - name: Publish package
+        env:
+          NPM_TAG: ${{ github.event.release.prerelease && 'next' || 'latest' }}
+        run: npm publish --access public --tag "$NPM_TAG"

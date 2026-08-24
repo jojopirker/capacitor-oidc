@@ -4,8 +4,9 @@ The first bootstrap prerelease may be published manually under the `next` tag to
 create the registry package and configure trusted publishing. It is not a stable
 release.
 
-The stable release workflow uses npm trusted publishing so GitHub exchanges a
-short-lived OIDC identity for publish access. It does not use an npm token.
+The release workflow uses npm trusted publishing so GitHub exchanges a short-lived
+OIDC identity for publish access. It does not use an npm token. Stable releases use
+the `latest` tag; prereleases use `next`.
 
 ## Bootstrap the package
 
@@ -59,22 +60,22 @@ The package and workflow settings are case-sensitive. The workflow must exist in
 Create the `npm-production` GitHub environment and add a required reviewer. Do not
 add `NPM_TOKEN` or another publishing secret. Leave the repository variable
 `NPM_PUBLISH_ENABLED` absent or set to `false` until the trusted publisher is
-configured and the requirements in [Security](../SECURITY.md) and
-[Testing](TESTING.md) are satisfied. Set it to `true` only for an approved stable
-release.
+configured. Set it to `true` only while an approved release is being published.
+Stable production releases additionally require the checks in
+[Security](../SECURITY.md) and [Testing](TESTING.md) to be satisfied.
 
 ## Publish a release
 
-1. Set a stable `X.Y.Z` version in `package.json` and regenerate the lockfile.
+1. Set an `X.Y.Z` or `X.Y.Z-prerelease` version in `package.json` and regenerate the lockfile.
 2. Merge the version change into `main`.
-3. Publish a GitHub release whose tag is exactly `vX.Y.Z`.
+3. Publish a GitHub release whose tag is exactly `vX.Y.Z` or `vX.Y.Z-prerelease`. Mark a prerelease version as a GitHub prerelease.
 4. Approve the `npm-production` deployment after its checks are visible.
 
 The workflow installs from the lockfile without a package-manager cache, verifies
-the package, inspects the tarball, and publishes it publicly. The job is skipped
-unless `NPM_PUBLISH_ENABLED` is exactly `true`. npm automatically generates
-provenance for a public package published from this public repository through a
-trusted publisher.
+the package, inspects the tarball, and publishes it publicly under `latest` for a
+stable release or `next` for a prerelease. The job is skipped unless
+`NPM_PUBLISH_ENABLED` is exactly `true`. npm automatically generates provenance for
+a public package published from this public repository through a trusted publisher.
 
 After the first trusted publication succeeds, configure npm to disallow traditional
 token publishing and revoke unused automation tokens. Trusted publishing continues
