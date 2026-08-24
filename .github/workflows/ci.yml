@@ -37,11 +37,14 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Create iOS simulator
+        id: simulator
+        run: echo "id=$(xcrun simctl create 'Capacitor OIDC' com.apple.CoreSimulator.SimDeviceType.iPhone-16e com.apple.CoreSimulator.SimRuntime.iOS-18-5)" >> "$GITHUB_OUTPUT"
       - name: Build and test
         run: >-
           xcodebuild
           -scheme CapacitorOidc
-          -destination 'platform=iOS Simulator,name=iPhone 16e,OS=18.5'
+          -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}'
           CODE_SIGNING_ALLOWED=NO
           test
 
