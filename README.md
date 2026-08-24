@@ -126,6 +126,8 @@ npm run verify:android
 
 Physical-device verification remains required for Web Crypto, system consent UI, redirects, and shared widget access before a production release.
 
+See [Publishing](docs/PUBLISHING.md) for the guarded npm trusted-publishing setup and release process.
+
 ## License
 
 Apache-2.0
