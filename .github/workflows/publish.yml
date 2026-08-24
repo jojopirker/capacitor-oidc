@@ -1,0 +1,54 @@
+name: Publish
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    if: ${{ vars.NPM_PUBLISH_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: npm-production
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Check out release
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+      - name: Require release commit on main
+        run: git merge-base --is-ancestor HEAD origin/main
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24.19.0
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - name: Validate release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: >-
+          node -e
+          'const pkg = require("./package.json");
+          const expected = "v" + pkg.version;
+          const tag = process.env.RELEASE_TAG;
+          if (!/^v\d+\.\d+\.\d+$/.test(tag) || tag !== expected) {
+          console.error("Expected release tag " + expected + ", received " + tag);
+          process.exit(1);
+          }'
+      - run: npm ci
+      - run: npm run verify
+      - run: npm pack --dry-run
+      - run: npm publish --access public
