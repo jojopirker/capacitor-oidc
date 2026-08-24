@@ -28,10 +28,11 @@
 
 ## Android
 
-- [ ] Login uses Auth Tab where supported and Custom Tabs otherwise.
+- [ ] Login uses a system Custom Tab.
 - [ ] No authorization page is displayed in WebView.
 - [ ] User cancellation rejects with `USER_CANCELLED`.
-- [ ] Custom schemes and verified App Links can return the callback.
+- [ ] Custom schemes and verified App Links return the callback to the existing
+      `singleTask` host activity.
 - [ ] The encryption key is held by Android Keystore.
 - [ ] An app widget in the same package can read the session.
 
@@ -54,13 +55,13 @@
 - [ ] Concurrent renewal triggers share one request.
 - [ ] Returning to the foreground refreshes an expired or nearly expired token.
 - [ ] `getValidUser()` returns a sufficiently valid user or performs one refresh.
-- [ ] Refresh-token rotation is persisted atomically.
+- [ ] Refresh-token rotation is persisted atomically in the canonical user record.
 - [ ] Temporary network failure retains the stored session.
 - [ ] Logout stops renewal and removes local state.
 
 ## API
 
-- [ ] The package is published as `@jojopirker/capacitor-oidc`.
+- [ ] The package is published as `capacitor-oidc`.
 - [ ] `CapacitorUserManager` exposes upstream settings, events, user data, UserInfo,
       refresh, and revocation behavior where applicable to native clients.
 - [ ] Recommended interactive methods are `signin()` and `signout()`.
