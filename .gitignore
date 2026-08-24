@@ -1,5 +1,9 @@
 node_modules/
 dist/
-coverage/
+.build/
 .DS_Store
-*.log
+android/.gradle/
+android/build/
+android/local.properties
+ios/DerivedData/
+Package.resolved

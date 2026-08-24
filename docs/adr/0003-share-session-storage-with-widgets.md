@@ -14,4 +14,7 @@ same application package use the same vault.
 
 - Adding a widget later does not require migrating out of app-only storage.
 - A widget can read the current session in v1.
+- The canonical OIDC user record and native widget snapshot are separate writes.
+  The snapshot is an eventually consistent cache, so widgets must tolerate an
+  absent or temporarily stale value.
 - Native widget refresh is explicitly deferred.

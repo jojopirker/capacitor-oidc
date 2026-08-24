@@ -1,6 +1,6 @@
 # Architecture
 
-`@jojopirker/capacitor-oidc` adapts `oidc-client-ts` to Capacitor. It does not
+`capacitor-oidc` adapts `oidc-client-ts` to Capacitor. It does not
 implement OAuth or OpenID Connect protocol operations itself.
 
 This document is the implementation boundary. Changes that move behavior across
@@ -132,9 +132,8 @@ Only one native session may be active. Concurrent attempts fail with
 
 ### Android
 
-- Prefer Android Auth Tab when supported.
-- Fall back to Custom Tabs, never WebView.
-- Return redirects through Activity Result handling.
+- Use AndroidX Custom Tabs, never WebView.
+- Return redirects through a `singleTask` host activity's intent handling.
 - Support custom-scheme redirects and verified App Links.
 - Use the same implementation for authorization and end-session navigation.
 
@@ -235,13 +234,12 @@ Keep adapter errors small and stable:
 
 OIDC and OAuth server errors remain `oidc-client-ts` errors.
 
-## Dependency gates
+## Security assumptions
 
-Do not publish a production version until both gates pass:
+The JavaScript runtime must provide `crypto.subtle` and `crypto.getRandomValues`.
+The selected OIDC engine must validate the required ID-token issuer, audience, and
+expiration claims. Current limitations and the stable-release decision are
+recorded in [`SECURITY.md`](SECURITY.md).
 
-1. `crypto.subtle` works in packaged iOS and Android Capacitor WebViews.
-2. The selected `oidc-client-ts` version correctly validates required ID-token
-   issuer, audience, and expiration claims, or an upstream fix has been adopted.
-
-Do not add crypto or validation workarounds to this package merely to make either
-gate pass. Reconsider the protocol engine instead.
+Do not add package-local crypto or JWT validation to compensate for a protocol
+engine limitation. Reconsider the engine instead.

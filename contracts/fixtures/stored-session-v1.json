@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "issuer": "https://issuer.example",
+  "clientId": "mobile",
+  "accessToken": "access",
+  "refreshToken": "refresh",
+  "idToken": "id-token",
+  "tokenType": "Bearer",
+  "scope": "openid profile offline_access",
+  "expiresAt": 1800000000
+}
