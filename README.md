@@ -67,15 +67,19 @@ Register the redirect URI as a native public-client redirect at the provider. Ne
 
 For an iOS custom scheme, add it to the application target's `CFBundleURLTypes`. HTTPS callbacks through `ASWebAuthenticationSession` require iOS 17.4 or newer and the appropriate Associated Domains configuration.
 
-For an Android custom-scheme redirect, add this intent filter inside the host app's existing `MainActivity` declaration (the activity that extends `BridgeActivity`). Replace the scheme with the one used by your redirect URI:
+For an Android custom-scheme redirect, keep the host app's `MainActivity` in `singleTask` launch mode and add this intent filter inside that existing activity declaration. This ensures the callback reaches the plugin instance that opened the Custom Tab. Replace the scheme with the one used by your redirect URI:
 
 ```xml
-<intent-filter>
-  <action android:name="android.intent.action.VIEW" />
-  <category android:name="android.intent.category.DEFAULT" />
-  <category android:name="android.intent.category.BROWSABLE" />
-  <data android:scheme="com.example.app" />
-</intent-filter>
+<activity
+  android:name=".MainActivity"
+  android:launchMode="singleTask">
+  <intent-filter>
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="com.example.app" />
+  </intent-filter>
+</activity>
 ```
 
 HTTPS callbacks require a verified App Link and Digital Asset Links. Android presents authorization and logout in a system Custom Tab.
