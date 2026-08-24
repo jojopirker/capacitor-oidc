@@ -1,7 +1,12 @@
+import { readFileSync } from 'node:fs';
 import { User, UserManager } from 'oidc-client-ts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CapacitorUserManager } from './capacitor-user-manager';
+
+const storedSessionFixture = JSON.parse(
+  readFileSync(new URL('../contracts/fixtures/stored-session-v1.json', import.meta.url), 'utf8'),
+);
 
 const { setSessionSnapshot, storage } = vi.hoisted(() => ({
   storage: new Map<string, string>(),
@@ -54,17 +59,15 @@ describe('CapacitorUserManager', () => {
     const user = new User({
       access_token: 'access',
       refresh_token: 'refresh',
+      id_token: 'id-token',
       token_type: 'Bearer',
+      scope: 'openid profile offline_access',
       profile: { sub: 'subject' },
       expires_at: 1_800_000_000,
     });
 
     await manager.storeUser(user);
-    expect(JSON.parse(setSessionSnapshot.mock.lastCall?.[0].value)).toMatchObject({
-      version: 1,
-      accessToken: 'access',
-      refreshToken: 'refresh',
-    });
+    expect(JSON.parse(setSessionSnapshot.mock.lastCall?.[0].value)).toEqual(storedSessionFixture);
 
     await manager.removeUser();
     expect(setSessionSnapshot).toHaveBeenLastCalledWith({ namespace: 'default', value: null });
