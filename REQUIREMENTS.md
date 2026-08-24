@@ -60,7 +60,7 @@
 
 ## API
 
-- [ ] The package is published as `@jojopirker/capacitor-oidc`.
+- [ ] The package is published as `capacitor-oidc`.
 - [ ] `CapacitorUserManager` exposes upstream settings, events, user data, UserInfo,
       refresh, and revocation behavior where applicable to native clients.
 - [ ] Recommended interactive methods are `signin()` and `signout()`.

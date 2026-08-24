@@ -1,6 +1,6 @@
 # Architecture
 
-`@jojopirker/capacitor-oidc` adapts `oidc-client-ts` to Capacitor. It does not
+`capacitor-oidc` adapts `oidc-client-ts` to Capacitor. It does not
 implement OAuth or OpenID Connect protocol operations itself.
 
 This document is the implementation boundary. Changes that move behavior across
