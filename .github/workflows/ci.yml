@@ -32,7 +32,7 @@ jobs:
 
   ios:
     name: iOS
-    runs-on: macos-15-intel
+    runs-on: macos-15
     timeout-minutes: 20
     steps:
       - name: Check out repository
