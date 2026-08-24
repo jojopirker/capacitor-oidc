@@ -29,7 +29,7 @@ devices and verify:
 
 - system login and logout UI, provider-consent UI, cancellation, and callbacks;
 - Web Crypto availability in the packaged Capacitor WebView;
-- shared and ephemeral browser sessions;
+- shared and ephemeral iOS browser sessions;
 - Keychain and Keystore persistence across app restarts;
 - session reads from iOS and Android widgets.
 

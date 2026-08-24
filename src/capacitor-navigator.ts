@@ -54,9 +54,12 @@ export function assertSecureRequestUrl(requestUrl: string): void {
 
 export function callbackUrlFromRequest(requestUrl: string): string {
   const url = new URL(requestUrl);
-  const callback = url.searchParams.get('post_logout_redirect_uri') ?? url.searchParams.get('redirect_uri');
+  const callback =
+    url.searchParams.get('post_logout_redirect_uri') ??
+    url.searchParams.get('logout_uri') ??
+    url.searchParams.get('redirect_uri');
   if (!callback) {
-    throw new CapacitorOidcError('INVALID_CALLBACK', 'The OIDC request does not contain a redirect URI');
+    throw new CapacitorOidcError('INVALID_CALLBACK', 'The OIDC request does not contain a callback URI');
   }
   return callback;
 }

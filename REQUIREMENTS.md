@@ -28,7 +28,7 @@
 
 ## Android
 
-- [ ] Login uses Auth Tab where supported and Custom Tabs otherwise.
+- [ ] Login uses a system Custom Tab.
 - [ ] No authorization page is displayed in WebView.
 - [ ] User cancellation rejects with `USER_CANCELLED`.
 - [ ] Custom schemes and verified App Links can return the callback.

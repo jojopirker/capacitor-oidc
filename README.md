@@ -8,7 +8,7 @@ A small native Capacitor adapter for [`oidc-client-ts`](https://github.com/autht
 The package keeps OAuth and OpenID Connect in `oidc-client-ts`. Its native code only presents system authentication UI and stores state securely:
 
 - iOS: `ASWebAuthenticationSession` and Keychain.
-- Android: Auth Tab with its Custom Tab fallback, plus AES-GCM protected storage with a key held by Android Keystore.
+- Android: Custom Tabs plus AES-GCM protected storage with a key held by Android Keystore.
 - TypeScript: a native `INavigator`, secure `StateStore`, foreground refresh serialization, and a resume check.
 
 It does not patch `fetch`, add native OIDC networking, accept client secrets, render authentication in a WebView, or implement iframe renewal.
@@ -19,6 +19,8 @@ It does not patch `fetch`, add native OIDC networking, accept client secrets, re
 npm install capacitor-oidc oidc-client-ts @capacitor/app
 npx cap sync
 ```
+
+The package supports Capacitor 7 and newer.
 
 All discovery, token, refresh, UserInfo, and revocation requests use normal WebView `fetch`. The provider must allow the app's configured Capacitor origin through CORS.
 
@@ -65,7 +67,7 @@ Register the redirect URI as a native public-client redirect at the provider. Ne
 
 For an iOS custom scheme, add it to the application target's `CFBundleURLTypes`. HTTPS callbacks through `ASWebAuthenticationSession` require iOS 17.4 or newer and the appropriate Associated Domains configuration.
 
-For Android custom-scheme fallback, add this intent filter inside the host app's existing `MainActivity` declaration (the activity that extends `BridgeActivity`). Replace the scheme with the one used by your redirect URI:
+For an Android custom-scheme redirect, add this intent filter inside the host app's existing `MainActivity` declaration (the activity that extends `BridgeActivity`). Replace the scheme with the one used by your redirect URI:
 
 ```xml
 <intent-filter>
@@ -76,9 +78,20 @@ For Android custom-scheme fallback, add this intent filter inside the host app's
 </intent-filter>
 ```
 
-HTTPS callbacks require a verified App Link and Digital Asset Links. Auth Tab handles the result directly when the installed browser supports it; its intent is intentionally compatible with Custom Tabs on older browsers.
+HTTPS callbacks require a verified App Link and Digital Asset Links. Android presents authorization and logout in a system Custom Tab.
 
-Calling `cancel()` on Android rejects the pending JavaScript promise, but Android does not provide an API to forcibly close an already-open system Auth Tab or Custom Tab. Ephemeral browsing is a request to the installed browser and may be ignored by a fallback browser.
+Calling `cancel()` on Android rejects the pending JavaScript promise, but Android does not provide an API to forcibly close an already-open system Custom Tab. Ephemeral browsing is an iOS option.
+
+Provider-specific logout parameters remain available through `oidc-client-ts`. For example, Amazon Cognito uses `client_id` and `logout_uri` instead of `post_logout_redirect_uri`:
+
+```ts
+await manager.signout({
+  extraQueryParams: {
+    client_id: 'mobile-app',
+    logout_uri: 'com.example.app:/logout-callback',
+  },
+});
+```
 
 ## Secure storage and widgets
 

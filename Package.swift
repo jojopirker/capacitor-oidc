@@ -8,7 +8,7 @@ let package = Package(
         .library(name: "CapacitorOidc", targets: ["CapacitorOidcPlugin"])
     ],
     dependencies: [
-        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", from: "8.0.0")
+        .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", "7.0.0"..<"9.0.0")
     ],
     targets: [
         .target(

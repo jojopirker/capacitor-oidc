@@ -30,12 +30,7 @@ type UnsupportedSettings =
   | 'stateStore'
   | 'userStore';
 
-export type CapacitorUserManagerSettings = Omit<
-  UserManagerSettings,
-  UnsupportedSettings | 'post_logout_redirect_uri'
-> & {
-  post_logout_redirect_uri: string;
-};
+export type CapacitorUserManagerSettings = Omit<UserManagerSettings, UnsupportedSettings>;
 
 export interface StoredSessionV1 {
   version: 1;

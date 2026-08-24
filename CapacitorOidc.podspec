@@ -13,6 +13,6 @@ Pod::Spec.new do |spec|
   spec.source = { git: repository_url, tag: spec.version.to_s }
   spec.source_files = 'ios/Sources/**/*.{swift,h,m,c,cc,mm,cpp}'
   spec.ios.deployment_target = '15.0'
-  spec.dependency 'Capacitor'
+  spec.dependency 'Capacitor', '>= 7.0'
   spec.swift_version = '5.9'
 end

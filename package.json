@@ -1,6 +1,6 @@
 {
   "name": "capacitor-oidc",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1-alpha.2",
   "description": "A minimal Capacitor adapter for standards-based OpenID Connect authentication.",
   "main": "dist/plugin.cjs",
   "module": "dist/esm/index.js",
@@ -45,14 +45,14 @@
     "oidc-client-ts": "3.5.0"
   },
   "peerDependencies": {
-    "@capacitor/app": "^8.0.0",
-    "@capacitor/core": "^8.0.0"
+    "@capacitor/app": ">=7.0.0",
+    "@capacitor/core": ">=7.0.0"
   },
   "devDependencies": {
-    "@capacitor/android": "8.5.0",
-    "@capacitor/app": "8.1.1",
-    "@capacitor/core": "8.5.0",
-    "@capacitor/ios": "8.5.0",
+    "@capacitor/android": "7.6.1",
+    "@capacitor/app": "7.1.2",
+    "@capacitor/core": "7.6.1",
+    "@capacitor/ios": "7.6.1",
     "@ionic/eslint-config": "0.4.0",
     "@ionic/prettier-config": "4.0.0",
     "@types/node": "24.5.2",

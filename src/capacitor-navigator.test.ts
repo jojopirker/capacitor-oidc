@@ -13,9 +13,20 @@ describe('callbackUrlFromRequest', () => {
     expect(callbackUrlFromRequest(request)).toBe('https://app.example/logout');
   });
 
+  it('reads a Cognito logout redirect', () => {
+    const request = 'https://issuer.example/logout?client_id=mobile&logout_uri=com.example.app%3A%2Flogout';
+    expect(callbackUrlFromRequest(request)).toBe('com.example.app:/logout');
+  });
+
   it('prefers the logout redirect when both callback parameters are present', () => {
     const request =
       'https://issuer.example/logout?redirect_uri=com.example.app%3A%2Fwrong&post_logout_redirect_uri=com.example.app%3A%2Flogout';
+    expect(callbackUrlFromRequest(request)).toBe('com.example.app:/logout');
+  });
+
+  it('prefers the standard logout redirect over a provider-specific logout redirect', () => {
+    const request =
+      'https://issuer.example/logout?logout_uri=com.example.app%3A%2Fwrong&post_logout_redirect_uri=com.example.app%3A%2Flogout';
     expect(callbackUrlFromRequest(request)).toBe('com.example.app:/logout');
   });
 });
