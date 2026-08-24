@@ -43,6 +43,12 @@ android {
         targetCompatibility JavaVersion.VERSION_21
     }
 
+    testOptions {
+        unitTests.all {
+            systemProperty 'storedSessionFixture', file('../contracts/fixtures/stored-session-v1.json').absolutePath
+        }
+    }
+
     publishing {
         singleVariant("release")
     }
@@ -65,4 +71,5 @@ dependencies {
     implementation "androidx.activity:activity:$androidxActivityVersion"
     implementation "androidx.browser:browser:$androidxBrowserVersion"
     testImplementation "junit:junit:$junitVersion"
+    testImplementation "org.json:json:20250517"
 }
