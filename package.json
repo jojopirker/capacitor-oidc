@@ -33,7 +33,7 @@
     "clean": "rimraf dist",
     "lint": "eslint src --ext ts && prettier --check src package.json README.md docs",
     "prepack": "npm run build",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "verify": "npm run lint && npm run test && npm run build",
     "verify:ios": "xcodebuild -scheme CapacitorOidc -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO",
     "verify:android": "cd android && ./gradlew clean test assembleDebug"
