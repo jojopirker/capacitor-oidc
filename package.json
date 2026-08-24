@@ -2,6 +2,18 @@
   "name": "@jojopirker/capacitor-oidc",
   "version": "0.0.0",
   "description": "A minimal Capacitor adapter for standards-based OpenID Connect authentication.",
+  "main": "dist/plugin.cjs",
+  "module": "dist/esm/index.js",
+  "types": "dist/esm/index.d.ts",
+  "files": [
+    "android/src/main/",
+    "android/build.gradle",
+    "dist/",
+    "ios/Sources",
+    "ios/Tests",
+    "Package.swift",
+    "CapacitorOidc.podspec"
+  ],
   "license": "Apache-2.0",
   "author": {
     "name": "Jojo Pirker",
@@ -15,5 +27,56 @@
     "url": "https://github.com/jojopirker/capacitor-oidc/issues"
   },
   "homepage": "https://github.com/jojopirker/capacitor-oidc#readme",
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
+    "clean": "rimraf dist",
+    "lint": "eslint src --ext ts && prettier --check src package.json README.md docs",
+    "test": "vitest run",
+    "verify": "npm run lint && npm run test && npm run build",
+    "verify:ios": "xcodebuild -scheme CapacitorOidc -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO",
+    "verify:android": "cd android && ./gradlew clean test assembleDebug"
+  },
+  "dependencies": {
+    "oidc-client-ts": "3.5.0"
+  },
+  "peerDependencies": {
+    "@capacitor/app": "^8.0.0",
+    "@capacitor/core": "^8.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/android": "8.5.0",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.0",
+    "@capacitor/ios": "8.5.0",
+    "@ionic/eslint-config": "0.4.0",
+    "@ionic/prettier-config": "4.0.0",
+    "@types/node": "24.5.2",
+    "eslint": "8.57.1",
+    "prettier": "3.6.2",
+    "rimraf": "6.1.0",
+    "rollup": "4.62.5",
+    "typescript": "5.9.3",
+    "vitest": "3.2.7"
+  },
+  "prettier": "@ionic/prettier-config",
+  "eslintConfig": {
+    "extends": "@ionic/eslint-config/recommended",
+    "rules": {
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        {
+          "argsIgnorePattern": "^_"
+        }
+      ]
+    }
+  },
+  "capacitor": {
+    "ios": {
+      "src": "ios"
+    },
+    "android": {
+      "src": "android"
+    }
+  }
 }
