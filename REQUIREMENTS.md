@@ -31,7 +31,8 @@
 - [ ] Login uses a system Custom Tab.
 - [ ] No authorization page is displayed in WebView.
 - [ ] User cancellation rejects with `USER_CANCELLED`.
-- [ ] Custom schemes and verified App Links can return the callback.
+- [ ] Custom schemes and verified App Links return the callback to the existing
+      `singleTask` host activity.
 - [ ] The encryption key is held by Android Keystore.
 - [ ] An app widget in the same package can read the session.
 

@@ -133,7 +133,7 @@ Only one native session may be active. Concurrent attempts fail with
 ### Android
 
 - Use AndroidX Custom Tabs, never WebView.
-- Return redirects through the host activity's intent handling.
+- Return redirects through a `singleTask` host activity's intent handling.
 - Support custom-scheme redirects and verified App Links.
 - Use the same implementation for authorization and end-session navigation.
 
