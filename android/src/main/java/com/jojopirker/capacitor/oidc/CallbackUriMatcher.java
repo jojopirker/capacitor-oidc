@@ -20,4 +20,3 @@ final class CallbackUriMatcher {
         return left == null ? right == null : left.equalsIgnoreCase(right);
     }
 }
-

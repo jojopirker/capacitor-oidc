@@ -126,4 +126,3 @@ public final class TokenVault: @unchecked Sendable {
         return query
     }
 }
-

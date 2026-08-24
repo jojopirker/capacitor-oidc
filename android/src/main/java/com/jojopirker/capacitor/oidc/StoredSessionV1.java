@@ -109,4 +109,3 @@ public final class StoredSessionV1 {
         if (value != null) json.put(key, value);
     }
 }
-

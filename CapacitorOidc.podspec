@@ -15,4 +15,3 @@ Pod::Spec.new do |spec|
   spec.dependency 'Capacitor'
   spec.swift_version = '5.9'
 end
-

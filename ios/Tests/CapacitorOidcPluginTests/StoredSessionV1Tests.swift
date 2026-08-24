@@ -16,4 +16,3 @@ final class StoredSessionV1Tests: XCTestCase {
         XCTAssertEqual(decoded, session)
     }
 }
-
