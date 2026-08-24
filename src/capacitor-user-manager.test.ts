@@ -132,4 +132,28 @@ describe('CapacitorUserManager', () => {
     stopRenewal.mockRestore();
     await manager.dispose();
   });
+
+  it('forwards provider-specific signout arguments unchanged', async () => {
+    const manager = await CapacitorUserManager.create({
+      authority: settings.authority,
+      client_id: settings.client_id,
+      redirect_uri: settings.redirect_uri,
+      automaticSilentRenew: false,
+    });
+    const args = {
+      extraQueryParams: {
+        client_id: 'mobile',
+        logout_uri: 'com.example.app:/logout',
+      },
+      id_token_hint: 'id-token',
+      state: { source: 'native' },
+    };
+    const signout = vi.spyOn(UserManager.prototype, 'signoutPopup').mockResolvedValue();
+
+    await manager.signout(args);
+
+    expect(signout).toHaveBeenCalledWith(args);
+    signout.mockRestore();
+    await manager.dispose();
+  });
 });

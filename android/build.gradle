@@ -1,10 +1,9 @@
 ext {
     capacitorVersion = System.getenv('CAPACITOR_VERSION')
-    compileSdkVersion = project.hasProperty('compileSdkVersion') ? project.property('compileSdkVersion').toString().toInteger() : 36
+    compileSdkVersion = project.hasProperty('compileSdkVersion') ? project.property('compileSdkVersion').toString().toInteger() : 35
     minSdkVersion = project.hasProperty('minSdkVersion') && project.property('minSdkVersion') != null ? project.property('minSdkVersion').toString().toInteger() : 24
-    targetSdkVersion = project.hasProperty('targetSdkVersion') ? project.property('targetSdkVersion').toString().toInteger() : 36
-    androidxActivityVersion = project.hasProperty('androidxActivityVersion') ? rootProject.ext.androidxActivityVersion : '1.11.0'
-    androidxBrowserVersion = project.hasProperty('androidxBrowserVersion') ? rootProject.ext.androidxBrowserVersion : '1.10.0'
+    targetSdkVersion = project.hasProperty('targetSdkVersion') ? project.property('targetSdkVersion').toString().toInteger() : 35
+    androidxBrowserVersion = project.hasProperty('androidxBrowserVersion') ? rootProject.ext.androidxBrowserVersion : '1.8.0'
     junitVersion = project.hasProperty('junitVersion') ? rootProject.ext.junitVersion : '4.13.2'
 }
 
@@ -14,7 +13,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.13.0'
+        classpath 'com.android.tools.build:gradle:8.7.2'
     }
 }
 
@@ -68,7 +67,6 @@ dependencies {
         implementation project(':capacitor-android')
     }
 
-    implementation "androidx.activity:activity:$androidxActivityVersion"
     implementation "androidx.browser:browser:$androidxBrowserVersion"
     testImplementation "junit:junit:$junitVersion"
     testImplementation "org.json:json:20250517"
