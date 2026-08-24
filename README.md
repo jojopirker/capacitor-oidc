@@ -86,7 +86,7 @@ HTTPS callbacks require a verified App Link and Digital Asset Links. Android pre
 
 Calling `cancel()` on Android rejects the pending JavaScript promise, but Android does not provide an API to forcibly close an already-open system Custom Tab. Ephemeral browsing is an iOS option.
 
-Provider-specific logout parameters remain available through `oidc-client-ts`. For example, Amazon Cognito uses `client_id` and `logout_uri` instead of `post_logout_redirect_uri`:
+Provider-specific logout parameters remain available through `oidc-client-ts`. For Amazon Cognito, leave `post_logout_redirect_uri` unset in the manager settings and pass its `client_id` and `logout_uri` parameters when signing out:
 
 ```ts
 await manager.signout({
