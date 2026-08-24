@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jojopirker/capacitor-oidc/contracts/stored-session-v1.schema.json",
+  "title": "StoredSessionV1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "issuer", "clientId", "accessToken", "tokenType"],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "issuer": {
+      "type": "string",
+      "format": "uri"
+    },
+    "clientId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "accessToken": {
+      "type": "string",
+      "minLength": 1
+    },
+    "refreshToken": {
+      "type": "string"
+    },
+    "idToken": {
+      "type": "string"
+    },
+    "tokenType": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "string"
+    },
+    "expiresAt": {
+      "type": "integer",
+      "minimum": 0
+    }
+  }
+}
