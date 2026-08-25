@@ -89,26 +89,6 @@ the normal `UserManager` from `oidc-client-ts` and select the implementation wit
 - [Testing status](docs/TESTING.md)
 - [Security](SECURITY.md)
 
-## Session renewal
-
-`automaticSilentRenew` uses the foreground expiry timer from `oidc-client-ts`.
-Native silent renewal uses the refresh token and never falls back to an iframe.
-Concurrent renewal triggers share one request. When the app returns to the
-foreground, the manager checks whether the current user needs renewal.
-
-The operating system can suspend or terminate the app, so the package does not
-promise exact background refresh timing.
-
-## Networking
-
-Discovery, token exchange, refresh, UserInfo, and revocation are performed by
-`oidc-client-ts` through the unmodified WebView `fetch`. The corresponding
-provider endpoints must allow the application's configured Capacitor origin
-through CORS.
-
-The package does not patch `fetch`, add native OIDC networking, accept client
-secrets, or render authentication inside a WebView.
-
 ## Development
 
 ```sh
