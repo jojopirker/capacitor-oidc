@@ -1,32 +1,49 @@
 # capacitor-oidc
 
-A small native Capacitor adapter for [`oidc-client-ts`](https://github.com/authts/oidc-client-ts).
+[![npm](https://img.shields.io/npm/v/capacitor-oidc)](https://www.npmjs.com/package/capacitor-oidc)
+[![CI](https://github.com/jojopirker/capacitor-oidc/actions/workflows/ci.yml/badge.svg)](https://github.com/jojopirker/capacitor-oidc/actions/workflows/ci.yml)
+[![license](https://img.shields.io/npm/l/capacitor-oidc)](LICENSE)
 
-> [!WARNING]
-> This package is not ready for production use. `oidc-client-ts` 3.5.0 does not validate the required ID-token `iss`, `aud`, and `exp` claims. See [Security](SECURITY.md).
+Native OAuth 2.0 and OpenID Connect for Capacitor, powered by
+[`oidc-client-ts`](https://github.com/authts/oidc-client-ts).
 
-The package keeps OAuth and OpenID Connect in `oidc-client-ts`. Its native code only presents system authentication UI and stores state securely:
+`capacitor-oidc` adapts the familiar `UserManager` API to native iOS and Android
+applications. It keeps protocol behavior in `oidc-client-ts` and adds only the
+Capacitor-specific pieces:
 
-- iOS: `ASWebAuthenticationSession` and Keychain.
-- Android: Auth Tab with its Custom Tab fallback, plus AES-GCM protected storage with a key held by Android Keystore.
-- TypeScript: a native `INavigator`, secure `StateStore`, foreground refresh serialization, and a resume check.
+- system authentication UI instead of an embedded WebView;
+- secure native storage for OIDC transactions and sessions;
+- refresh-token renewal when the app is active or resumes;
+- a native-readable session snapshot for app widgets.
 
-It does not patch `fetch`, add native OIDC networking, accept client secrets, render authentication in a WebView, or implement iframe renewal.
+On iOS, authentication uses `ASWebAuthenticationSession`. On Android, it uses
+AndroidX Auth Tab with its Custom Tab fallback.
+
+> [!CAUTION]
+> This package is an alpha. The public API and stored-session format can still
+> change before v1. See [Security](SECURITY.md) and
+> [current test coverage](docs/TESTING.md) before making a production decision.
+
+## Requirements
+
+- Capacitor 7 or 8
+- iOS 15 or newer
+- Android API 24 or newer
+- Android compile SDK 36, Java 21, and a compatible Android Gradle Plugin
+- an OAuth public client using Authorization Code Flow with PKCE
+- Web Crypto in the packaged Capacitor WebView
+- CORS support for the app's Capacitor origin on OIDC HTTP endpoints
+
+Never ship a client secret in a Capacitor application.
 
 ## Install
 
 ```sh
-npm install capacitor-oidc oidc-client-ts @capacitor/app
+npm install capacitor-oidc @capacitor/app
 npx cap sync
 ```
 
-The package supports Capacitor 7 and newer.
-
-All discovery, token, refresh, UserInfo, and revocation requests use normal WebView `fetch`. The provider must allow the app's configured Capacitor origin through CORS.
-
-Authorization and logout endpoints must use HTTPS. Plain HTTP is accepted only for loopback local development.
-
-## Usage
+## Quick start
 
 ```ts
 import { CapacitorUserManager } from 'capacitor-oidc';
@@ -42,96 +59,55 @@ const manager = await CapacitorUserManager.create(
     revokeTokensOnSignout: true,
   },
   {
-    prefersEphemeralWebBrowserSession: false,
     storageNamespace: 'primary',
-    ios: {
-      keychainAccessGroup: 'TEAMID.group.com.example.app',
-      keychainAccessibility: 'afterFirstUnlockThisDeviceOnly',
-    },
   },
 );
 
 const user = await manager.signin();
 const validUser = await manager.getValidUser(30);
+
 await manager.signout();
 await manager.dispose();
 ```
 
-`automaticSilentRenew` uses `oidc-client-ts`'s foreground expiry timer. Native silent renewal uses a refresh token only and never falls back to an iframe. Concurrent renewal triggers share one request. Returning to the foreground calls `getValidUser()` so a token that expired while the app was suspended is refreshed.
+Register the redirect and post-logout redirect URIs exactly at your provider and
+in the native application. The provider client must be public and must allow
+Authorization Code Flow with PKCE.
 
-The operating system can suspend or terminate the app, so exact background refresh timing is not promised.
+`CapacitorUserManager` is for native Capacitor runtimes. For a browser build, use
+the normal `UserManager` from `oidc-client-ts` and select the implementation with
+`Capacitor.isNativePlatform()` in the application.
 
-## Redirect setup
+## Documentation
 
-Register the redirect URI as a native public-client redirect at the provider. Never put a client secret in the app.
+- [Getting started](docs/GETTING_STARTED.md)
+- [iOS and Android setup](docs/PLATFORM_SETUP.md)
+- [Provider configuration](docs/PROVIDERS.md)
+- [API and `oidc-client-ts` compatibility](docs/API.md)
+- [Sessions, secure storage, and widgets](docs/SESSIONS_AND_WIDGETS.md)
+- [Troubleshooting](docs/TROUBLESHOOTING.md)
+- [Testing status](docs/TESTING.md)
+- [Security](SECURITY.md)
 
-For an iOS custom scheme, add it to the application target's `CFBundleURLTypes`. HTTPS callbacks through `ASWebAuthenticationSession` require iOS 17.4 or newer and the appropriate Associated Domains configuration.
+## Session renewal
 
-For an Android custom-scheme redirect, keep the host app's `MainActivity` in Capacitor's default `singleTask` launch mode and add this intent filter inside that existing activity declaration. This ensures callbacks from Auth Tab's Custom Tab fallback reach the plugin instance that opened the session. Replace the scheme with the one used by your redirect URI:
+`automaticSilentRenew` uses the foreground expiry timer from `oidc-client-ts`.
+Native silent renewal uses the refresh token and never falls back to an iframe.
+Concurrent renewal triggers share one request. When the app returns to the
+foreground, the manager checks whether the current user needs renewal.
 
-```xml
-<activity
-  android:name=".MainActivity"
-  android:launchMode="singleTask">
-  <intent-filter>
-    <action android:name="android.intent.action.VIEW" />
-    <category android:name="android.intent.category.DEFAULT" />
-    <category android:name="android.intent.category.BROWSABLE" />
-    <data android:scheme="com.example.app" />
-  </intent-filter>
-</activity>
-```
+The operating system can suspend or terminate the app, so the package does not
+promise exact background refresh timing.
 
-HTTPS callbacks require a verified App Link and Digital Asset Links. Auth Tab handles the result directly when the installed browser supports it and falls back to a Custom Tab on older browsers.
+## Networking
 
-Calling `cancel()` on Android rejects the pending JavaScript promise, but Android does not provide an API to forcibly close an already-open system Auth Tab or Custom Tab. Ephemeral browsing is requested on both platforms and may be ignored by an Android fallback browser.
+Discovery, token exchange, refresh, UserInfo, and revocation are performed by
+`oidc-client-ts` through the unmodified WebView `fetch`. The corresponding
+provider endpoints must allow the application's configured Capacitor origin
+through CORS.
 
-Provider-specific logout parameters remain available through `oidc-client-ts`. For Amazon Cognito, leave `post_logout_redirect_uri` unset in the manager settings and pass its `client_id` and `logout_uri` parameters when signing out:
-
-```ts
-await manager.signout({
-  extraQueryParams: {
-    client_id: 'mobile-app',
-    logout_uri: 'com.example.app:/logout-callback',
-  },
-});
-```
-
-## Secure storage and widgets
-
-`userStore` and transaction `stateStore` are separate secure namespaces. Each successful user write also updates a versioned native `StoredSessionV1` snapshot. The snapshot is an eventually consistent widget cache, not the canonical OIDC session.
-
-An iOS app and WidgetKit extension can construct the public `TokenVault` with the same Keychain access group:
-
-```swift
-let vault = TokenVault(accessGroup: "TEAMID.group.com.example.app")
-let session = try vault.loadSession(namespace: "primary")
-```
-
-Replace `TEAMID` with the Apple Developer Team ID. Both targets must carry the same
-Keychain Sharing entitlement, normally declared as
-`$(AppIdentifierPrefix)group.com.example.app`; the runtime option uses its expanded
-`TEAMID.group.com.example.app` value. The default accessibility is
-`AfterFirstUnlockThisDeviceOnly`; Keychain synchronization and biometric gating are disabled.
-
-An Android app widget in the same package can use the public native vault:
-
-```java
-TokenVault vault = new TokenVault(context);
-StoredSessionV1 session = vault.loadSession("primary");
-```
-
-Widgets may read the current session. Autonomous native refresh is deliberately not implemented.
-
-## Logout behavior
-
-`signout()` uses the provider's end-session endpoint in the same native authentication UI. If `revokeTokensOnSignout` is enabled, upstream revocation runs before local state is cleared. A revocation failure therefore preserves the local session and its renewal timer; after revocation succeeds, a later browser or callback failure leaves the app locally signed out. Removing the user cancels its expiry timer without disabling renewal for a later sign-in with the same manager.
-
-## Unsupported APIs
-
-Use `signin()` and `signout()` for interactive flows. Redirect navigation, iframe logout, and browser session monitoring reject with `UNSUPPORTED_RUNTIME`. Resource Owner Password Credentials, DPoP, client secrets, exact background scheduling, and autonomous widget refresh are outside v1.
-
-Only one interactive native authentication session and one configured manager are supported at a time.
+The package does not patch `fetch`, add native OIDC networking, accept client
+secrets, or render authentication inside a WebView.
 
 ## Development
 
@@ -141,9 +117,9 @@ npm run verify:ios
 npm run verify:android
 ```
 
-Physical-device verification remains required for Web Crypto, system consent UI, redirects, and shared widget access before a production release. See [Testing](docs/TESTING.md) for the full matrix.
-
-See [Publishing](docs/PUBLISHING.md) for the guarded npm trusted-publishing setup and release process.
+Architecture decisions and contributor constraints are documented in
+[ARCHITECTURE.md](ARCHITECTURE.md), [REQUIREMENTS.md](REQUIREMENTS.md), and
+[docs/adr](docs/adr).
 
 ## License
 
