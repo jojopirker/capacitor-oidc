@@ -1,42 +1,52 @@
 # Testing
 
-## Local checks
+## Automated checks
 
-Run the TypeScript checks and package build:
+Run TypeScript linting, unit tests, and the package build:
 
 ```sh
 npm run verify
 ```
 
-`verify` also checks that the TypeScript, Swift, and Java bridge constants still
-match `contracts/native-api.json`.
-
-Build the native libraries with:
+Build and test the native libraries with:
 
 ```sh
 npm run verify:ios
 npm run verify:android
 ```
 
-CI runs Vitest, the iOS XCTest suite in a simulator, Android unit tests, native
-builds, Android lint, and `npm pack --dry-run`. The shared `StoredSessionV1`
-fixture is decoded or produced by all three platform implementations.
+CI currently runs:
 
-## Physical-device coverage
+- TypeScript linting, Vitest, package builds, and `npm pack --dry-run`;
+- iOS XCTest in an iOS 18.5 simulator;
+- Android unit tests, assembly, and lint with SDK 36;
+- cross-platform decoding of the versioned `StoredSessionV1` fixture.
 
-Before a stable release, install example applications on physical iOS and Android
-devices and verify:
+## Current manual validation
+
+Basic Amazon Cognito login has been tested in a packaged application on a
+physical iOS device. The system authentication UI, callback, code exchange, and
+resulting session work in that path.
+
+This does not yet cover all iOS cancellation, logout, refresh, rotation, restart,
+ephemeral-session, and error edge cases. Physical Android and the provider matrix
+also remain incomplete.
+
+## Required physical-device coverage
+
+Before a stable release, verify on physical iOS and Android devices:
 
 - system login and logout UI, provider-consent UI, cancellation, and callbacks;
 - Web Crypto availability in the packaged Capacitor WebView;
-- shared and ephemeral iOS browser sessions;
+- shared and ephemeral browser sessions;
 - Keychain and Keystore persistence across app restarts;
-- session reads from iOS and Android widgets.
+- refresh before expiry and refresh after resuming beyond expiry;
+- reads from iOS and Android widgets.
 
 ## Provider integration coverage
 
-Run the following flows against at least two conforming providers, including a
-locally configurable provider:
+The target matrix contains at least two conforming providers, including a locally
+configurable provider, and covers:
 
 - discovery and explicit metadata;
 - login, code exchange, UserInfo, and logout;
@@ -45,3 +55,6 @@ locally configurable provider:
 - invalid state, nonce, callback, and ID-token claims;
 - a provider that omits refresh tokens;
 - a provider that rejects the configured Capacitor origin through CORS.
+
+Provider configuration examples that have not been tested on physical devices are
+labelled as guidance in [Provider configuration](PROVIDERS.md).
