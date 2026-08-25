@@ -123,4 +123,4 @@ jobs:
         env:
           NPM_TAG: ${{ github.event.release.prerelease && 'next' || 'latest' }}
           PACKAGE_FILE: ${{ needs.package.outputs.package-file }}
-        run: npm publish "release/$PACKAGE_FILE" --ignore-scripts --access public --tag "$NPM_TAG"
+        run: npm publish "./release/$PACKAGE_FILE" --ignore-scripts --access public --tag "$NPM_TAG"
