@@ -100,6 +100,7 @@ type CapacitorUserManagerSettings = Omit<
   | "client_secret"
   | "client_authentication"
   | "disablePKCE"
+  | "dpop"
   | "response_type"
   | "userStore"
   | "stateStore"
@@ -132,7 +133,7 @@ Only one native session may be active. Concurrent attempts fail with
 
 ### Android
 
-- Use AndroidX Custom Tabs, never WebView.
+- Use AndroidX Auth Tab with its Custom Tab fallback, never WebView.
 - Return redirects through a `singleTask` host activity's intent handling.
 - Support custom-scheme redirects and verified App Links.
 - Use the same implementation for authorization and end-session navigation.
