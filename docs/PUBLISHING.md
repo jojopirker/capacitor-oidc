@@ -71,11 +71,15 @@ Stable production releases additionally require the checks in
 3. Publish a GitHub release whose tag is exactly `vX.Y.Z` or `vX.Y.Z-prerelease`. Mark a prerelease version as a GitHub prerelease.
 4. Approve the `npm-production` deployment after its checks are visible.
 
-The workflow installs from the lockfile without a package-manager cache, verifies
-the package, inspects the tarball, and publishes it publicly under `latest` for a
-stable release or `next` for a prerelease. The job is skipped unless
-`NPM_PUBLISH_ENABLED` is exactly `true`. npm automatically generates provenance for
-a public package published from this public repository through a trusted publisher.
+The workflow first installs from the lockfile without a package-manager cache,
+verifies the package, and creates the release tarball in a job without OIDC
+permissions. After that succeeds, the `npm-production` environment gates a separate
+job that downloads and publishes only that tarball, with package scripts disabled.
+The privileged job does not check out source, install dependencies, or run repository
+build scripts. Stable releases use `latest`; prereleases use `next`. The workflow is
+skipped unless `NPM_PUBLISH_ENABLED` is exactly `true`. npm automatically generates
+provenance for a public package published from this public repository through a
+trusted publisher.
 
 After the first trusted publication succeeds, configure npm to disallow traditional
 token publishing and revoke unused automation tokens. Trusted publishing continues
