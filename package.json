@@ -12,6 +12,7 @@
     "dist/",
     "docs/",
     "ios/Sources",
+    "ios/Tests",
     "Package.swift",
     "CapacitorOidc.podspec",
     "SECURITY.md"
