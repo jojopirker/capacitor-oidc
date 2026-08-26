@@ -1,6 +1,6 @@
 {
   "name": "capacitor-oidc",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A minimal Capacitor adapter for standards-based OpenID Connect authentication.",
   "main": "dist/plugin.cjs",
   "module": "dist/esm/index.js",
