@@ -19,6 +19,14 @@ Capacitor-specific pieces:
 On iOS, authentication uses `ASWebAuthenticationSession`. On Android, it uses
 AndroidX Auth Tab with its Custom Tab fallback.
 
+## Demo
+
+This example signs in against a local Keycloak realm with Authorization Code
+Flow and PKCE, renews the session through its refresh token, and signs out at
+the provider.
+
+![Capacitor OIDC login, renewal, and logout on the iOS Simulator](docs/assets/capacitor-oidc-demo.gif)
+
 ## Requirements
 
 - Capacitor 7 or 8
