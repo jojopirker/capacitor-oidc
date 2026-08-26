@@ -70,6 +70,7 @@ export class CapacitorUserManager extends UserManager {
   }
 
   async signout(args: SignoutPopupArgs = {}): Promise<void> {
+    await this.waitForRefresh();
     await super.signoutPopup(args);
   }
 
@@ -85,6 +86,11 @@ export class CapacitorUserManager extends UserManager {
     if (!user) return null;
     if (user.expires_in === undefined || user.expires_in > minimumValiditySeconds) return user;
     return this.signinSilent();
+  }
+
+  override async removeUser(): Promise<void> {
+    await this.waitForRefresh();
+    await super.removeUser();
   }
 
   override signinSilent(args: SigninSilentArgs = {}): Promise<User | null> {
@@ -104,10 +110,14 @@ export class CapacitorUserManager extends UserManager {
     }
 
     const refresh = super.signinSilent({ ...args, forceIframeAuth: false }).catch(async (error: unknown) => {
-      if (error instanceof ErrorResponse && error.error === 'invalid_grant') await this.removeUser();
+      if (error instanceof ErrorResponse && error.error === 'invalid_grant') await super.removeUser();
       throw error;
     });
     return refresh;
+  }
+
+  private async waitForRefresh(): Promise<void> {
+    await this.refreshPromise?.catch(() => undefined);
   }
 
   override async storeUser(user: User | null): Promise<void> {
@@ -133,6 +143,7 @@ export class CapacitorUserManager extends UserManager {
   async dispose(): Promise<void> {
     this.stopSilentRenew();
     await this.appStateListener?.remove();
+    await this.waitForRefresh();
     await this.cancel();
   }
 

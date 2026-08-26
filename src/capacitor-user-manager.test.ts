@@ -114,6 +114,100 @@ describe('CapacitorUserManager', () => {
     await manager.dispose();
   });
 
+  it('waits for startup renewal before removing the local user', async () => {
+    const user = new User({
+      access_token: 'expired-access',
+      refresh_token: 'refresh',
+      token_type: 'Bearer',
+      profile: { sub: 'subject' },
+      expires_at: 1,
+    });
+    restoreOnCreate(user);
+    let resolveRefresh!: (user: User) => void;
+    const upstreamRefresh = new Promise<User>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
+
+    const manager = await CapacitorUserManager.create(automaticSettings);
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+
+    const removal = manager.removeUser();
+    await Promise.resolve();
+    expect(storage.has(storedUserKey())).toBe(true);
+
+    resolveRefresh(user);
+    await removal;
+    expect(storage.has(storedUserKey())).toBe(false);
+
+    refresh.mockRestore();
+    await manager.dispose();
+  });
+
+  it('waits for startup renewal before starting signout', async () => {
+    const user = new User({
+      access_token: 'expired-access',
+      refresh_token: 'refresh',
+      token_type: 'Bearer',
+      profile: { sub: 'subject' },
+      expires_at: 1,
+    });
+    restoreOnCreate(user);
+    let resolveRefresh!: (user: User) => void;
+    const upstreamRefresh = new Promise<User>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
+    const signout = vi.spyOn(UserManager.prototype, 'signoutPopup').mockResolvedValue();
+
+    const manager = await CapacitorUserManager.create(automaticSettings);
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+
+    const signingOut = manager.signout();
+    await Promise.resolve();
+    expect(signout).not.toHaveBeenCalled();
+
+    resolveRefresh(user);
+    await signingOut;
+    expect(signout).toHaveBeenCalledTimes(1);
+
+    refresh.mockRestore();
+    signout.mockRestore();
+    await manager.dispose();
+  });
+
+  it('waits for startup renewal before disposal completes', async () => {
+    const user = new User({
+      access_token: 'expired-access',
+      refresh_token: 'refresh',
+      token_type: 'Bearer',
+      profile: { sub: 'subject' },
+      expires_at: 1,
+    });
+    restoreOnCreate(user);
+    let resolveRefresh!: (user: User) => void;
+    const upstreamRefresh = new Promise<User>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
+
+    const manager = await CapacitorUserManager.create(automaticSettings);
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+
+    let disposed = false;
+    const disposal = manager.dispose().then(() => {
+      disposed = true;
+    });
+    await Promise.resolve();
+    expect(disposed).toBe(false);
+
+    resolveRefresh(user);
+    await disposal;
+    expect(disposed).toBe(true);
+
+    refresh.mockRestore();
+  });
+
   it('does not refresh a valid restored user', async () => {
     const user = new User({
       access_token: 'access',
