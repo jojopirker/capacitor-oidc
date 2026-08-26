@@ -209,6 +209,45 @@ describe('CapacitorUserManager', () => {
     await manager.dispose();
   });
 
+  it('waits for startup renewal before starting interactive signin', async () => {
+    const storedUser = new User({
+      access_token: 'expired-access',
+      refresh_token: 'refresh',
+      token_type: 'Bearer',
+      profile: { sub: 'old-subject' },
+      expires_at: 1,
+    });
+    const signedInUser = new User({
+      access_token: 'new-access',
+      refresh_token: 'new-refresh',
+      token_type: 'Bearer',
+      profile: { sub: 'new-subject' },
+      expires_at: futureExpiration,
+    });
+    restoreOnCreate(storedUser);
+    let resolveRefresh!: (user: User) => void;
+    const upstreamRefresh = new Promise<User>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
+    const signin = vi.spyOn(UserManager.prototype, 'signinPopup').mockResolvedValue(signedInUser);
+
+    const manager = await CapacitorUserManager.create(automaticSettings);
+    await vi.waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+
+    const signingIn = manager.signin();
+    await Promise.resolve();
+    expect(signin).not.toHaveBeenCalled();
+
+    resolveRefresh(storedUser);
+    await expect(signingIn).resolves.toBe(signedInUser);
+    expect(signin).toHaveBeenCalledTimes(1);
+
+    refresh.mockRestore();
+    signin.mockRestore();
+    await manager.dispose();
+  });
+
   it('waits for startup renewal before disposal completes', async () => {
     const user = new User({
       access_token: 'expired-access',

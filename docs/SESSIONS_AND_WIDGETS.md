@@ -24,9 +24,9 @@ Native silent renewal requires a refresh token and never falls back to an iframe
 Concurrent renewal requests share one operation so a rotating refresh token is
 not used twice. A terminal `invalid_grant` removes the local user; a temporary
 network failure preserves it and is reported through `silentRenewError`. Renewal
-does not block manager creation. Signout, local user removal, and disposal wait
-for an in-flight automatic check or renewal so it cannot finish after those
-lifecycle operations.
+does not block manager creation. Interactive sign-in, signout, local user removal,
+and disposal wait for an in-flight automatic check or renewal so an old renewal
+cannot finish after those lifecycle operations.
 
 The operating system can suspend or terminate the process. The package therefore
 does not guarantee exact background refresh timing.

@@ -67,10 +67,19 @@ export class CapacitorUserManager extends UserManager {
   }
 
   async signin(args: SigninPopupArgs = {}): Promise<User> {
+    return this.signinPopup(args);
+  }
+
+  override async signinPopup(args: SigninPopupArgs = {}): Promise<User> {
+    await this.waitForRenewal();
     return super.signinPopup(args);
   }
 
   async signout(args: SignoutPopupArgs = {}): Promise<void> {
+    await this.signoutPopup(args);
+  }
+
+  override async signoutPopup(args: SignoutPopupArgs = {}): Promise<void> {
     await this.waitForRenewal();
     await super.signoutPopup(args);
   }
