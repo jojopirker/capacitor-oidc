@@ -8,6 +8,7 @@
   "files": [
     "android/src/main/",
     "android/build.gradle",
+    "contracts/fixtures/stored-session-v1.json",
     "contracts/stored-session-v1.schema.json",
     "dist/",
     "docs/",
