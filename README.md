@@ -19,11 +19,6 @@ Capacitor-specific pieces:
 On iOS, authentication uses `ASWebAuthenticationSession`. On Android, it uses
 AndroidX Auth Tab with its Custom Tab fallback.
 
-> [!CAUTION]
-> This package is an alpha. The public API and stored-session format can still
-> change before v1. See [Security](SECURITY.md) and
-> [current test coverage](docs/TESTING.md) before making a production decision.
-
 ## Requirements
 
 - Capacitor 7 or 8
