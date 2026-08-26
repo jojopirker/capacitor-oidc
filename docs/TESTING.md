@@ -20,6 +20,7 @@ CI currently runs:
 - TypeScript linting, Vitest, package builds, and `npm pack --dry-run`;
 - iOS XCTest in an iOS 18.5 simulator;
 - Android unit tests, assembly, and lint with SDK 36;
+- packaged iOS and Android consumer builds with Capacitor 7 and 8;
 - cross-platform decoding of the versioned `StoredSessionV1` fixture.
 
 ## Current manual validation

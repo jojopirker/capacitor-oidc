@@ -73,3 +73,115 @@ jobs:
       - name: Test, assemble, and lint
         working-directory: android
         run: ./gradlew --no-daemon test assembleDebug lint
+
+  consumer-android:
+    name: Consumer Android / Capacitor ${{ matrix.capacitor }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        include:
+          - capacitor: 7.6.8
+            app: 7.1.2
+          - capacitor: 8.5.0
+            app: 8.1.1
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Set up Java
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - run: npm ci
+      - name: Pack plugin
+        run: npm pack --pack-destination "$RUNNER_TEMP"
+      - name: Build consumer
+        env:
+          CAPACITOR_APP_VERSION: ${{ matrix.app }}
+          CAPACITOR_VERSION: ${{ matrix.capacitor }}
+        run: |
+          APP_DIR="$RUNNER_TEMP/consumer"
+          cp -R test/consumer "$APP_DIR"
+          cd "$APP_DIR"
+          npm init -y
+          npm install \
+            "@capacitor/app@$CAPACITOR_APP_VERSION" \
+            "@capacitor/core@$CAPACITOR_VERSION" \
+            "@capacitor/cli@$CAPACITOR_VERSION" \
+            "@capacitor/android@$CAPACITOR_VERSION"
+          npx cap add android
+          if [ "$CAPACITOR_VERSION" = 7.6.8 ]; then
+            sed -i "s/compileSdkVersion = 35/compileSdkVersion = 36/" android/variables.gradle
+            sed -i "s/targetSdkVersion = 35/targetSdkVersion = 36/" android/variables.gradle
+            sed -i "s/gradle:8.7.2/gradle:8.9.1/" android/build.gradle
+          fi
+          npm install "$RUNNER_TEMP"/capacitor-oidc-*.tgz
+          npx cap sync android
+          cd android
+          ./gradlew --no-daemon assembleDebug
+
+  consumer-ios:
+    name: Consumer iOS / Capacitor ${{ matrix.capacitor }}
+    runs-on: macos-15
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        include:
+          - capacitor: 7.6.8
+            app: 7.1.2
+            xcode: workspace
+          - capacitor: 8.5.0
+            app: 8.1.1
+            xcode: project
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - run: npm ci
+      - name: Pack plugin
+        run: npm pack --pack-destination "$RUNNER_TEMP"
+      - name: Build consumer
+        env:
+          CAPACITOR_APP_VERSION: ${{ matrix.app }}
+          CAPACITOR_VERSION: ${{ matrix.capacitor }}
+        run: |
+          APP_DIR="$RUNNER_TEMP/consumer"
+          cp -R test/consumer "$APP_DIR"
+          cd "$APP_DIR"
+          npm init -y
+          npm install \
+            "@capacitor/app@$CAPACITOR_APP_VERSION" \
+            "@capacitor/core@$CAPACITOR_VERSION" \
+            "@capacitor/cli@$CAPACITOR_VERSION" \
+            "@capacitor/ios@$CAPACITOR_VERSION"
+          npx cap add ios
+          if [ -f ios/App/Podfile ]; then
+            sed -i '' "s/platform :ios, '14.0'/platform :ios, '15.0'/" ios/App/Podfile
+          fi
+          npm install "$RUNNER_TEMP"/capacitor-oidc-*.tgz
+          npx cap sync ios
+          if [ "${{ matrix.xcode }}" = workspace ]; then
+            xcodebuild \
+              -workspace ios/App/App.xcworkspace \
+              -scheme App \
+              -destination generic/platform=iOS \
+              CODE_SIGNING_ALLOWED=NO \
+              build
+          else
+            xcodebuild \
+              -project ios/App/App.xcodeproj \
+              -scheme App \
+              -destination generic/platform=iOS \
+              CODE_SIGNING_ALLOWED=NO \
+              build
+          fi
