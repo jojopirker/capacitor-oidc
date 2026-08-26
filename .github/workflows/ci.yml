@@ -118,7 +118,8 @@ jobs:
           npx cap add android
           npm install "$RUNNER_TEMP"/capacitor-oidc-*.tgz
           npx cap sync android
-          ./android/gradlew --no-daemon assembleDebug
+          cd android
+          ./gradlew --no-daemon assembleDebug
 
   consumer-ios:
     name: Consumer iOS / Capacitor ${{ matrix.capacitor }}
