@@ -144,6 +144,39 @@ describe('CapacitorUserManager', () => {
     await manager.dispose();
   });
 
+  it('waits for the entire automatic check before removing the local user', async () => {
+    const user = new User({
+      access_token: 'access',
+      refresh_token: 'refresh',
+      token_type: 'Bearer',
+      profile: { sub: 'subject' },
+      expires_at: futureExpiration,
+    });
+    restoreOnCreate(user);
+    let resolveCheck!: (user: User | null) => void;
+    const automaticCheck = new Promise<User | null>((resolve) => {
+      resolveCheck = resolve;
+    });
+    const getValidUser = vi.spyOn(CapacitorUserManager.prototype, 'getValidUser').mockReturnValue(automaticCheck);
+
+    const manager = await CapacitorUserManager.create(automaticSettings);
+    expect(getValidUser).toHaveBeenCalledTimes(1);
+
+    let removed = false;
+    const removal = manager.removeUser().then(() => {
+      removed = true;
+    });
+    await Promise.resolve();
+    expect(removed).toBe(false);
+
+    resolveCheck(user);
+    await removal;
+    expect(storage.has(storedUserKey())).toBe(false);
+
+    getValidUser.mockRestore();
+    await manager.dispose();
+  });
+
   it('waits for startup renewal before starting signout', async () => {
     const user = new User({
       access_token: 'expired-access',
@@ -245,6 +278,8 @@ describe('CapacitorUserManager', () => {
     const getValidUser = vi.spyOn(CapacitorUserManager.prototype, 'getValidUser');
     const manager = await CapacitorUserManager.create(automaticSettings);
     await vi.waitFor(() => expect(getValidUser).toHaveBeenCalledTimes(1));
+    await getValidUser.mock.results[0].value;
+    await Promise.resolve();
 
     appState.listener?.({ isActive: false });
     expect(getValidUser).toHaveBeenCalledTimes(1);

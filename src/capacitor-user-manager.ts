@@ -18,6 +18,7 @@ import { CapacitorOidcError, unsupported } from './errors';
 import { NativeOidc } from './native';
 
 export class CapacitorUserManager extends UserManager {
+  private automaticRenewalPromise?: Promise<User | null>;
   private refreshPromise?: Promise<User | null>;
   private appStateListener?: PluginListenerHandle;
 
@@ -70,15 +71,21 @@ export class CapacitorUserManager extends UserManager {
   }
 
   async signout(args: SignoutPopupArgs = {}): Promise<void> {
-    await this.waitForRefresh();
+    await this.waitForRenewal();
     await super.signoutPopup(args);
   }
 
   private checkForAutomaticRenewal(): void {
-    if (!this.settings.automaticSilentRenew) return;
-    void this.getValidUser().catch((error: unknown) =>
-      this.events._raiseSilentRenewError(error instanceof Error ? error : new Error('Silent renewal failed')),
-    );
+    if (!this.settings.automaticSilentRenew || this.automaticRenewalPromise) return;
+    const renewal = this.getValidUser();
+    this.automaticRenewalPromise = renewal;
+    void renewal
+      .catch((error: unknown) =>
+        this.events._raiseSilentRenewError(error instanceof Error ? error : new Error('Silent renewal failed')),
+      )
+      .finally(() => {
+        if (this.automaticRenewalPromise === renewal) this.automaticRenewalPromise = undefined;
+      });
   }
 
   async getValidUser(minimumValiditySeconds = 60): Promise<User | null> {
@@ -89,7 +96,7 @@ export class CapacitorUserManager extends UserManager {
   }
 
   override async removeUser(): Promise<void> {
-    await this.waitForRefresh();
+    await this.waitForRenewal();
     await super.removeUser();
   }
 
@@ -116,7 +123,8 @@ export class CapacitorUserManager extends UserManager {
     return refresh;
   }
 
-  private async waitForRefresh(): Promise<void> {
+  private async waitForRenewal(): Promise<void> {
+    await this.automaticRenewalPromise?.catch(() => undefined);
     await this.refreshPromise?.catch(() => undefined);
   }
 
@@ -143,7 +151,7 @@ export class CapacitorUserManager extends UserManager {
   async dispose(): Promise<void> {
     this.stopSilentRenew();
     await this.appStateListener?.remove();
-    await this.waitForRefresh();
+    await this.waitForRenewal();
     await this.cancel();
   }
 
