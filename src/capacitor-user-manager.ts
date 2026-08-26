@@ -18,6 +18,7 @@ import { CapacitorOidcError, unsupported } from './errors';
 import { NativeOidc } from './native';
 
 export class CapacitorUserManager extends UserManager {
+  private automaticRenewalPromise?: Promise<User | null>;
   private refreshPromise?: Promise<User | null>;
   private appStateListener?: PluginListenerHandle;
 
@@ -55,25 +56,45 @@ export class CapacitorUserManager extends UserManager {
     assertSettings(settings);
     await NativeOidc.configure(nativeOptions.ios ?? {});
     const manager = new CapacitorUserManager(settings, nativeOptions, nativeOptions.storageNamespace ?? 'default');
-    await manager.getValidUser();
+    await manager.getUser();
     manager.appStateListener = await App.addListener('appStateChange', ({ isActive }) => {
       if (isActive) {
-        void manager
-          .getValidUser()
-          .catch((error: unknown) =>
-            manager.events._raiseSilentRenewError(error instanceof Error ? error : new Error('Silent renewal failed')),
-          );
+        manager.checkForAutomaticRenewal();
       }
     });
+    manager.checkForAutomaticRenewal();
     return manager;
   }
 
   async signin(args: SigninPopupArgs = {}): Promise<User> {
+    return this.signinPopup(args);
+  }
+
+  override async signinPopup(args: SigninPopupArgs = {}): Promise<User> {
+    await this.waitForRenewal();
     return super.signinPopup(args);
   }
 
   async signout(args: SignoutPopupArgs = {}): Promise<void> {
+    await this.signoutPopup(args);
+  }
+
+  override async signoutPopup(args: SignoutPopupArgs = {}): Promise<void> {
+    await this.waitForRenewal();
     await super.signoutPopup(args);
+  }
+
+  private checkForAutomaticRenewal(): void {
+    if (!this.settings.automaticSilentRenew || this.automaticRenewalPromise) return;
+    const renewal = this.getValidUser();
+    this.automaticRenewalPromise = renewal;
+    void renewal
+      .catch((error: unknown) =>
+        this.events._raiseSilentRenewError(error instanceof Error ? error : new Error('Silent renewal failed')),
+      )
+      .finally(() => {
+        if (this.automaticRenewalPromise === renewal) this.automaticRenewalPromise = undefined;
+      });
   }
 
   async getValidUser(minimumValiditySeconds = 60): Promise<User | null> {
@@ -81,6 +102,11 @@ export class CapacitorUserManager extends UserManager {
     if (!user) return null;
     if (user.expires_in === undefined || user.expires_in > minimumValiditySeconds) return user;
     return this.signinSilent();
+  }
+
+  override async removeUser(): Promise<void> {
+    await this.waitForRenewal();
+    await super.removeUser();
   }
 
   override signinSilent(args: SigninSilentArgs = {}): Promise<User | null> {
@@ -95,15 +121,20 @@ export class CapacitorUserManager extends UserManager {
   private async refresh(args: SigninSilentArgs): Promise<User | null> {
     const user = await this.getUser();
     if (!user?.refresh_token) {
-      if (user?.expired) await this.removeUser();
+      if (user?.expired) await super.removeUser();
       return null;
     }
 
     const refresh = super.signinSilent({ ...args, forceIframeAuth: false }).catch(async (error: unknown) => {
-      if (error instanceof ErrorResponse && error.error === 'invalid_grant') await this.removeUser();
+      if (error instanceof ErrorResponse && error.error === 'invalid_grant') await super.removeUser();
       throw error;
     });
     return refresh;
+  }
+
+  private async waitForRenewal(): Promise<void> {
+    await this.automaticRenewalPromise?.catch(() => undefined);
+    await this.refreshPromise?.catch(() => undefined);
   }
 
   override async storeUser(user: User | null): Promise<void> {
@@ -129,6 +160,7 @@ export class CapacitorUserManager extends UserManager {
   async dispose(): Promise<void> {
     this.stopSilentRenew();
     await this.appStateListener?.remove();
+    await this.waitForRenewal();
     await this.cancel();
   }
 

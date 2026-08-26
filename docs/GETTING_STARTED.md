@@ -57,10 +57,10 @@ browser to reuse an existing provider session. Set it to `true` when an isolated
 session is more important than shared SSO. Android fallback browsers may ignore
 the preference.
 
-The current alpha restores the stored user during `create()`. If that user needs
-immediate renewal and the device is offline, manager creation can reject. This
-behavior is tracked for improvement; applications should currently initialize
-the manager where they can present an authentication or connectivity error.
+`create()` restores the stored user from secure native storage. When
+`automaticSilentRenew` is enabled, any necessary renewal then runs without
+blocking manager creation. Listen for `silentRenewError` to handle a failed
+startup renewal; temporary failures preserve the stored session.
 
 ## 4. Sign in
 

@@ -46,13 +46,13 @@ not remove CORS requirements from token, UserInfo, refresh, or revocation calls.
 When the current user is expired and has no refresh token, `getValidUser()`
 removes the local user and returns `null`.
 
-## Manager creation fails while offline
+## Startup renewal fails
 
-The current alpha validates the restored session during
-`CapacitorUserManager.create()`. If the stored access token needs renewal, a
-temporary token-endpoint failure can reject creation. Initialize the manager from
-a place that can surface a retry action. A future implementation should make
-creation succeed offline and report renewal failure through `silentRenewError`.
+`CapacitorUserManager.create()` restores secure local state but does not wait for
+token renewal. When `automaticSilentRenew` is enabled, a required startup renewal
+runs asynchronously and reports failures through `silentRenewError`. Temporary
+token-endpoint failures preserve the stored session; a terminal `invalid_grant`
+removes it.
 
 ## Logout does not return to the app
 
