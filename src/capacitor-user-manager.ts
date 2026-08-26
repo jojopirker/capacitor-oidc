@@ -55,16 +55,13 @@ export class CapacitorUserManager extends UserManager {
     assertSettings(settings);
     await NativeOidc.configure(nativeOptions.ios ?? {});
     const manager = new CapacitorUserManager(settings, nativeOptions, nativeOptions.storageNamespace ?? 'default');
-    await manager.getValidUser();
+    await manager.getUser();
     manager.appStateListener = await App.addListener('appStateChange', ({ isActive }) => {
       if (isActive) {
-        void manager
-          .getValidUser()
-          .catch((error: unknown) =>
-            manager.events._raiseSilentRenewError(error instanceof Error ? error : new Error('Silent renewal failed')),
-          );
+        manager.checkForAutomaticRenewal();
       }
     });
+    manager.checkForAutomaticRenewal();
     return manager;
   }
 
@@ -74,6 +71,13 @@ export class CapacitorUserManager extends UserManager {
 
   async signout(args: SignoutPopupArgs = {}): Promise<void> {
     await super.signoutPopup(args);
+  }
+
+  private checkForAutomaticRenewal(): void {
+    if (!this.settings.automaticSilentRenew) return;
+    void this.getValidUser().catch((error: unknown) =>
+      this.events._raiseSilentRenewError(error instanceof Error ? error : new Error('Silent renewal failed')),
+    );
   }
 
   async getValidUser(minimumValiditySeconds = 60): Promise<User | null> {

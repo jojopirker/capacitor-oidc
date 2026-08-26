@@ -16,13 +16,15 @@ gating is not enabled because unattended foreground renewal must remain possible
 ## Renewal lifecycle
 
 When `automaticSilentRenew` is enabled, `oidc-client-ts` schedules renewal while
-the JavaScript runtime is active. The adapter also checks the current user when
-the application resumes.
+the JavaScript runtime is active. The adapter also checks the current user after
+manager creation and when the application resumes. These adapter checks do not
+run when automatic silent renewal is disabled.
 
 Native silent renewal requires a refresh token and never falls back to an iframe.
 Concurrent renewal requests share one operation so a rotating refresh token is
 not used twice. A terminal `invalid_grant` removes the local user; a temporary
-network failure preserves it.
+network failure preserves it and is reported through `silentRenewError`. Renewal
+does not block manager creation.
 
 The operating system can suspend or terminate the process. The package therefore
 does not guarantee exact background refresh timing.
