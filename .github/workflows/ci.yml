@@ -116,6 +116,11 @@ jobs:
             "@capacitor/cli@$CAPACITOR_VERSION" \
             "@capacitor/android@$CAPACITOR_VERSION"
           npx cap add android
+          if [ "$CAPACITOR_VERSION" = 7.6.8 ]; then
+            sed -i "s/compileSdkVersion = 35/compileSdkVersion = 36/" android/variables.gradle
+            sed -i "s/targetSdkVersion = 35/targetSdkVersion = 36/" android/variables.gradle
+            sed -i "s/gradle:8.7.2/gradle:8.9.1/" android/build.gradle
+          fi
           npm install "$RUNNER_TEMP"/capacitor-oidc-*.tgz
           npx cap sync android
           cd android
