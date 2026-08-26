@@ -8,11 +8,10 @@
   "files": [
     "android/src/main/",
     "android/build.gradle",
-    "contracts/",
+    "contracts/stored-session-v1.schema.json",
     "dist/",
     "docs/",
     "ios/Sources",
-    "ios/Tests",
     "Package.swift",
     "CapacitorOidc.podspec",
     "SECURITY.md"
