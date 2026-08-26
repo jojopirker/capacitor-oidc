@@ -320,6 +320,23 @@ describe('CapacitorUserManager', () => {
     await expect(CapacitorUserManager.create(settings)).rejects.toBe(error);
   });
 
+  it('removes an expired user without a refresh token', async () => {
+    const user = new User({
+      access_token: 'expired-access',
+      token_type: 'Bearer',
+      profile: { sub: 'subject' },
+      expires_at: 1,
+    });
+    restoreOnCreate(user);
+    const manager = await CapacitorUserManager.create(settings);
+
+    await expect(manager.getValidUser()).resolves.toBeNull();
+
+    expect(storage.has(storedUserKey())).toBe(false);
+    expect(setSessionSnapshot).toHaveBeenLastCalledWith({ namespace: 'default', value: null });
+    await manager.dispose();
+  });
+
   it('updates and clears the native widget snapshot through upstream storage paths', async () => {
     const manager = await CapacitorUserManager.create(settings);
     const user = new User({

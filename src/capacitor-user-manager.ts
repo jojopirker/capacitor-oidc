@@ -105,7 +105,7 @@ export class CapacitorUserManager extends UserManager {
   private async refresh(args: SigninSilentArgs): Promise<User | null> {
     const user = await this.getUser();
     if (!user?.refresh_token) {
-      if (user?.expired) await this.removeUser();
+      if (user?.expired) await super.removeUser();
       return null;
     }
 
