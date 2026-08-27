@@ -1,6 +1,6 @@
 import type { StateStore } from 'oidc-client-ts';
 
-import { NativeOidc } from './native';
+import { NativeOidc } from './native.js';
 
 export class CapacitorSecureStateStore implements StateStore {
   constructor(private readonly namespace: string) {}

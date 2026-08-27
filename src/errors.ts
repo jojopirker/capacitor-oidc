@@ -1,4 +1,4 @@
-import type { CapacitorOidcErrorCode } from './definitions';
+import type { CapacitorOidcErrorCode } from './definitions.js';
 
 export class CapacitorOidcError extends Error {
   constructor(

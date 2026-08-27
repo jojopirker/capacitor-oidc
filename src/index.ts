@@ -1,11 +1,12 @@
-export { CapacitorUserManager } from './capacitor-user-manager';
-export { CapacitorSecureStateStore } from './capacitor-secure-state-store';
-export { CapacitorOidcError } from './errors';
+export { CapacitorUserManager } from './capacitor-user-manager.js';
+export { CapacitorSecureStateStore } from './capacitor-secure-state-store.js';
+export { CapacitorOidcError } from './errors.js';
 export type {
   CapacitorOidcErrorCode,
   CapacitorOidcNativeOptions,
   CapacitorUserManagerSettings,
   IOSNativeOptions,
   StoredSessionV1,
-} from './definitions';
-export { User, UserManagerEvents } from 'oidc-client-ts';
+} from './definitions.js';
+export { User } from 'oidc-client-ts';
+export type { UserManagerEvents } from 'oidc-client-ts';

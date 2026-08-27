@@ -46,6 +46,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
+    "check:package": "node -e \"import('./dist/esm/index.js')\"",
     "clean": "rimraf dist",
     "e2e:keycloak:down": "docker compose -f test/e2e/keycloak/compose.yml down",
     "e2e:keycloak:up": "test/e2e/keycloak/create-certificate.sh test/e2e/keycloak/.certificates && docker compose -f test/e2e/keycloak/compose.yml up -d",
@@ -53,7 +54,7 @@
     "lint": "eslint src --ext ts && prettier --check src contracts package.json README.md SECURITY.md docs",
     "prepack": "npm run build",
     "test": "vitest run",
-    "verify": "npm run lint && npm run test && npm run build",
+    "verify": "npm run lint && npm run test && npm run build && npm run check:package",
     "verify:ios": "xcodebuild -scheme CapacitorOidc -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO",
     "verify:android": "cd android && ./gradlew clean test assembleDebug"
   },

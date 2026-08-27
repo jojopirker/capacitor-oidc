@@ -1,7 +1,7 @@
 import type { INavigator, IWindow, NavigateParams, NavigateResponse } from 'oidc-client-ts';
 
-import { CapacitorOidcError, unsupported } from './errors';
-import { NativeOidc } from './native';
+import { CapacitorOidcError, unsupported } from './errors.js';
+import { NativeOidc } from './native.js';
 
 export class CapacitorNavigator implements INavigator {
   constructor(private readonly prefersEphemeralWebBrowserSession: boolean) {}

@@ -11,11 +11,11 @@ import {
   type User,
 } from 'oidc-client-ts';
 
-import { CapacitorNavigator, UnsupportedIframeNavigator } from './capacitor-navigator';
-import { CapacitorSecureStateStore } from './capacitor-secure-state-store';
-import type { CapacitorOidcNativeOptions, CapacitorUserManagerSettings, StoredSessionV1 } from './definitions';
-import { CapacitorOidcError, unsupported } from './errors';
-import { NativeOidc } from './native';
+import { CapacitorNavigator, UnsupportedIframeNavigator } from './capacitor-navigator.js';
+import { CapacitorSecureStateStore } from './capacitor-secure-state-store.js';
+import type { CapacitorOidcNativeOptions, CapacitorUserManagerSettings, StoredSessionV1 } from './definitions.js';
+import { CapacitorOidcError, unsupported } from './errors.js';
+import { NativeOidc } from './native.js';
 
 export class CapacitorUserManager extends UserManager {
   private automaticRenewalPromise?: Promise<User | null>;
