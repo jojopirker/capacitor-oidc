@@ -72,7 +72,8 @@ jobs:
           npm ci
           npm run build
           npm --prefix example ci
-          npm --prefix example run sync:ios
+          VITE_OIDC_AUTHORITY=https://127.0.0.1:8443/realms/capacitor-oidc-e2e \
+            npm --prefix example run sync:ios
       - name: Start Keycloak
         run: |
           test/e2e/keycloak/create-certificate.sh "$RUNNER_TEMP/keycloak-tls"
@@ -133,6 +134,76 @@ jobs:
       - name: Stop Keycloak
         if: always()
         run: test ! -f "$RUNNER_TEMP/keycloak.pid" || kill "$(cat "$RUNNER_TEMP/keycloak.pid")"
+
+  example-android-e2e:
+    name: Example Android E2E / Keycloak
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Set up Java
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' \
+            | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build plugin and example
+        run: |
+          npm ci
+          npm run build
+          npm --prefix example ci
+          VITE_OIDC_AUTHORITY=http://localhost:8080/realms/capacitor-oidc-e2e \
+            npm --prefix example run sync:android
+      - name: Start Keycloak
+        run: |
+          npm run e2e:keycloak:up
+          for attempt in {1..60}; do
+            if curl --fail --silent \
+              http://127.0.0.1:8080/realms/capacitor-oidc-e2e/.well-known/openid-configuration \
+              > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f test/e2e/keycloak/compose.yml logs
+          exit 1
+      - name: Run authentication flow
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+        with:
+          api-level: 33
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -noaudio -no-boot-anim -no-snapshot -gpu swiftshader_indirect
+          working-directory: example/android
+          script: |
+            adb reverse tcp:8080 tcp:8080
+            ./gradlew --no-daemon :app:connectedDebugAndroidTest
+      - name: Upload Android test results
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: AuthenticationFlow-android
+          path: |
+            example/android/app/build/outputs/androidTest-results
+            example/android/app/build/reports/androidTests
+      - name: Print Keycloak log on failure
+        if: failure()
+        run: docker compose -f test/e2e/keycloak/compose.yml logs
+      - name: Stop Keycloak
+        if: always()
+        run: npm run e2e:keycloak:down
 
   android:
     name: Android
