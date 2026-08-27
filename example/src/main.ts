@@ -10,10 +10,11 @@ const dot = document.querySelector<HTMLSpanElement>('#dot')!;
 const signin = document.querySelector<HTMLButtonElement>('#signin')!;
 const refresh = document.querySelector<HTMLButtonElement>('#refresh')!;
 const signout = document.querySelector<HTMLButtonElement>('#signout')!;
+const authority = import.meta.env.VITE_OIDC_AUTHORITY ?? 'https://localhost:8443/realms/capacitor-oidc-e2e';
 
 const manager = await CapacitorUserManager.create(
   {
-    authority: 'https://localhost:8443/realms/capacitor-oidc-e2e',
+    authority,
     client_id: 'capacitor-oidc-example',
     redirect_uri: 'capacitor-oidc-example:/callback',
     post_logout_redirect_uri: 'capacitor-oidc-example:/logout-callback',
