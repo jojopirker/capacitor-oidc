@@ -4,20 +4,35 @@
 [![CI](https://github.com/jojopirker/capacitor-oidc/actions/workflows/ci.yml/badge.svg)](https://github.com/jojopirker/capacitor-oidc/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/capacitor-oidc)](LICENSE)
 
-Native OAuth 2.0 and OpenID Connect for Capacitor, powered by
-[`oidc-client-ts`](https://github.com/authts/oidc-client-ts).
+`capacitor-oidc` is a simple OAuth 2.0 and OpenID Connect implementation for
+Capacitor 7 and 8 on native iOS and Android, powered by
+[`oidc-client-ts`](https://github.com/authts/oidc-client-ts). It uses
+Authorization Code Flow with PKCE, native system authentication UI, and secure
+storage.
 
-`capacitor-oidc` adapts the familiar `UserManager` API to native iOS and Android
-applications. It keeps protocol behavior in `oidc-client-ts` and adds only the
-Capacitor-specific pieces:
+## Why `capacitor-oidc`?
 
-- system authentication UI instead of an embedded WebView;
-- secure native storage for OIDC transactions and sessions;
-- refresh-token renewal when the app is active or resumes;
-- a native-readable session snapshot for app widgets.
+- Simple standards-based OAuth 2.0 and OIDC for Capacitor, without
+  provider-specific SDKs.
+- The familiar `oidc-client-ts` `UserManager` API, session objects, and events.
+- System authentication UI instead of an embedded WebView.
+- Secure native storage for OIDC transactions and sessions.
+- Refresh-token renewal when the app is active or resumes.
+- A native-readable session snapshot for app widgets.
 
 On iOS, authentication uses `ASWebAuthenticationSession`. On Android, it uses
 AndroidX Auth Tab with its Custom Tab fallback.
+
+## Compatibility
+
+| Target    | Support                                      |
+| --------- | -------------------------------------------- |
+| Capacitor | 7 and 8                                      |
+| iOS       | 15 or newer; `ASWebAuthenticationSession`    |
+| Android   | API 24 or newer; Auth Tab or Custom Tab      |
+| Flow      | Authorization Code Flow with PKCE            |
+| Providers | Compatible OAuth 2.0 and OpenID Connect APIs |
+| Web       | Use `oidc-client-ts` directly                |
 
 ## Demo
 
