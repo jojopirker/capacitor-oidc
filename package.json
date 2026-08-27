@@ -1,7 +1,20 @@
 {
   "name": "capacitor-oidc",
   "version": "0.0.3",
-  "description": "A minimal Capacitor adapter for standards-based OpenID Connect authentication.",
+  "description": "Capacitor plugin for native OAuth 2.0 and OpenID Connect authentication on iOS and Android, powered by oidc-client-ts.",
+  "keywords": [
+    "capacitor",
+    "capacitor-plugin",
+    "authentication",
+    "oauth",
+    "oauth2",
+    "openid-connect",
+    "oidc",
+    "pkce",
+    "ios",
+    "android",
+    "oidc-client-ts"
+  ],
   "main": "dist/plugin.cjs",
   "module": "dist/esm/index.js",
   "types": "dist/esm/index.d.ts",
