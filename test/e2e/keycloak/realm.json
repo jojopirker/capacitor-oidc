@@ -1,0 +1,43 @@
+{
+  "realm": "capacitor-oidc-e2e",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 30,
+  "revokeRefreshToken": true,
+  "refreshTokenMaxReuse": 0,
+  "clients": [
+    {
+      "clientId": "capacitor-oidc-example",
+      "name": "Capacitor OIDC Example",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "redirectUris": ["capacitor-oidc-example:/callback", "capacitor-oidc-example:/logout-callback"],
+      "webOrigins": ["capacitor://localhost", "http://localhost"],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "capacitor-oidc-example:/logout-callback"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "demo",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "demo@example.invalid",
+      "firstName": "Demo",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

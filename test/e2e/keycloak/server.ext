@@ -1,0 +1,4 @@
+subjectAltName = IP:127.0.0.1,DNS:localhost
+basicConstraints = critical,CA:FALSE
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = serverAuth
