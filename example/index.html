@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Capacitor OIDC</title>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">CAPACITOR OIDC</p>
+      <h1>Native sign-in,<br />browser-grade protocol.</h1>
+      <p class="intro">A local Keycloak realm exercises PKCE, secure storage, token renewal, and provider logout.</p>
+
+      <section class="card" aria-live="polite">
+        <span id="dot" class="dot"></span>
+        <div>
+          <p id="state" class="state">Starting…</p>
+          <p id="detail" class="detail">Restoring the secure session</p>
+        </div>
+      </section>
+
+      <div class="actions">
+        <button id="signin">Sign in with Keycloak</button>
+        <button id="refresh" class="secondary" disabled>Renew session</button>
+        <button id="signout" class="quiet" disabled>Sign out</button>
+      </div>
+
+      <p id="event" class="event">Local test realm · Authorization Code + PKCE</p>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

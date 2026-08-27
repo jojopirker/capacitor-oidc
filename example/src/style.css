@@ -1,0 +1,131 @@
+:root {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+  color: #f7f4ed;
+  background: #13120f;
+  font-synthesis: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 90% 8%, rgba(232, 119, 72, 0.24), transparent 33%),
+    radial-gradient(circle at 15% 70%, rgba(83, 126, 112, 0.18), transparent 32%), #13120f;
+}
+
+main {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  padding: calc(env(safe-area-inset-top) + 52px) 24px calc(env(safe-area-inset-bottom) + 28px);
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  color: #e87748;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+}
+
+h1 {
+  max-width: 340px;
+  margin: 0;
+  font-size: clamp(42px, 12vw, 58px);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+}
+
+.intro {
+  max-width: 350px;
+  margin: 22px 0 34px;
+  color: #aaa49a;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: 0 24px 55px rgba(0, 0, 0, 0.24);
+  gap: 14px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: #6b665e;
+  box-shadow: 0 0 0 5px rgba(107, 102, 94, 0.16);
+}
+
+.dot.active {
+  background: #73c49a;
+  box-shadow: 0 0 0 5px rgba(115, 196, 154, 0.15);
+}
+
+.state,
+.detail,
+.event {
+  margin: 0;
+}
+
+.state {
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.detail {
+  margin-top: 4px;
+  color: #938d84;
+  font-size: 13px;
+}
+
+.actions {
+  display: grid;
+  margin-top: 24px;
+  gap: 10px;
+}
+
+button {
+  min-height: 54px;
+  border: 0;
+  border-radius: 15px;
+  color: #1c1814;
+  background: #f2ede3;
+  font: inherit;
+  font-weight: 650;
+}
+
+button.secondary {
+  color: #f5ede3;
+  background: #b45836;
+}
+
+button.quiet {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #aaa49a;
+  background: transparent;
+}
+
+button:disabled {
+  opacity: 0.35;
+}
+
+.event {
+  margin-top: auto;
+  padding-top: 28px;
+  color: #777169;
+  font-size: 12px;
+  text-align: center;
+}
