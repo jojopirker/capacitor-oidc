@@ -1,6 +1,52 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { assertSecureRequestUrl, callbackUrlFromRequest, isExpectedCallback } from './capacitor-navigator';
+import {
+  CapacitorNavigator,
+  assertSecureRequestUrl,
+  callbackUrlFromRequest,
+  isExpectedCallback,
+} from './capacitor-navigator';
+
+const { open } = vi.hoisted(() => ({
+  open: vi.fn(async ({ callbackUrl }: { callbackUrl: string }) => ({ url: `${callbackUrl}?code=code&state=state` })),
+}));
+
+vi.mock('@capacitor/core', () => ({
+  registerPlugin: () => ({
+    open,
+    cancel: vi.fn(),
+  }),
+}));
+
+beforeEach(() => {
+  open.mockClear();
+});
+
+describe('CapacitorNavigator', () => {
+  const url = 'https://issuer.example/authorize?redirect_uri=com.example.app%3A%2Fcallback';
+
+  it('uses a shared browser session by default', async () => {
+    const window = await new CapacitorNavigator(false).prepare();
+    await window.navigate({ url });
+
+    expect(open).toHaveBeenCalledWith({
+      url,
+      callbackUrl: 'com.example.app:/callback',
+      prefersEphemeralWebBrowserSession: false,
+    });
+  });
+
+  it('supports an ephemeral browser session when requested', async () => {
+    const window = await new CapacitorNavigator(true).prepare();
+    await window.navigate({ url });
+
+    expect(open).toHaveBeenCalledWith({
+      url,
+      callbackUrl: 'com.example.app:/callback',
+      prefersEphemeralWebBrowserSession: true,
+    });
+  });
+});
 
 describe('callbackUrlFromRequest', () => {
   it('reads an authorization redirect', () => {
