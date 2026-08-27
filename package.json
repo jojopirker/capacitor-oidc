@@ -34,6 +34,9 @@
   "scripts": {
     "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
     "clean": "rimraf dist",
+    "e2e:keycloak:down": "docker compose -f test/e2e/keycloak/compose.yml down",
+    "e2e:keycloak:up": "test/e2e/keycloak/create-certificate.sh test/e2e/keycloak/.certificates && docker compose -f test/e2e/keycloak/compose.yml up -d",
+    "example:build": "npm --prefix example run build",
     "lint": "eslint src --ext ts && prettier --check src contracts package.json README.md SECURITY.md docs",
     "prepack": "npm run build",
     "test": "vitest run",

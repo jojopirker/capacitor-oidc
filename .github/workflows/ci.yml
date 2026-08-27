@@ -48,6 +48,92 @@ jobs:
           CODE_SIGNING_ALLOWED=NO
           test
 
+  example-ios-e2e:
+    name: Example iOS E2E / Keycloak
+    runs-on: macos-26
+    timeout-minutes: 30
+    env:
+      KEYCLOAK_VERSION: 26.6.4
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          package-manager-cache: false
+      - name: Set up Java
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Build plugin and example
+        run: |
+          npm ci
+          npm run build
+          npm --prefix example ci
+          npm --prefix example run sync:ios
+      - name: Start Keycloak
+        run: |
+          test/e2e/keycloak/create-certificate.sh "$RUNNER_TEMP/keycloak-tls"
+          curl --fail --location --silent --show-error \
+            --output "$RUNNER_TEMP/keycloak.zip" \
+            "https://github.com/keycloak/keycloak/releases/download/$KEYCLOAK_VERSION/keycloak-$KEYCLOAK_VERSION.zip"
+          unzip -q "$RUNNER_TEMP/keycloak.zip" -d "$RUNNER_TEMP"
+          mkdir -p "$RUNNER_TEMP/keycloak-$KEYCLOAK_VERSION/data/import"
+          cp test/e2e/keycloak/realm.json \
+            "$RUNNER_TEMP/keycloak-$KEYCLOAK_VERSION/data/import/capacitor-oidc-e2e-realm.json"
+          KC_BOOTSTRAP_ADMIN_USERNAME=admin \
+          KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+            "$RUNNER_TEMP/keycloak-$KEYCLOAK_VERSION/bin/kc.sh" \
+            start-dev --https-port=8443 \
+            --https-certificate-file="$RUNNER_TEMP/keycloak-tls/server.crt" \
+            --https-certificate-key-file="$RUNNER_TEMP/keycloak-tls/server.key" \
+            --import-realm \
+            > "$RUNNER_TEMP/keycloak.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/keycloak.pid"
+          for attempt in {1..60}; do
+            if curl --fail --silent \
+              --cacert "$RUNNER_TEMP/keycloak-tls/ca.crt" \
+              https://127.0.0.1:8443/realms/capacitor-oidc-e2e/.well-known/openid-configuration \
+              > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/keycloak.log"
+          exit 1
+      - name: Create iOS simulator
+        id: example-simulator
+        run: |
+          defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
+          simulator_id="$(xcrun simctl create 'Capacitor OIDC E2E' com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro com.apple.CoreSimulator.SimRuntime.iOS-26-5)"
+          echo "id=$simulator_id" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$simulator_id"
+          xcrun simctl bootstatus "$simulator_id" -b
+          xcrun simctl keychain "$simulator_id" add-root-cert "$RUNNER_TEMP/keycloak-tls/ca.crt"
+      - name: Run authentication flow
+        run: >-
+          xcodebuild
+          -project example/ios/App/App.xcodeproj
+          -scheme App
+          -destination 'platform=iOS Simulator,id=${{ steps.example-simulator.outputs.id }}'
+          -only-testing:AppUITests/AuthenticationFlowTests/testLoginRefreshAndLogout
+          -resultBundlePath "$RUNNER_TEMP/AuthenticationFlow.xcresult"
+          test
+      - name: Upload authentication test result
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: AuthenticationFlow.xcresult
+          path: ${{ runner.temp }}/AuthenticationFlow.xcresult
+      - name: Print Keycloak log on failure
+        if: failure()
+        run: test ! -f "$RUNNER_TEMP/keycloak.log" || cat "$RUNNER_TEMP/keycloak.log"
+      - name: Stop Keycloak
+        if: always()
+        run: test ! -f "$RUNNER_TEMP/keycloak.pid" || kill "$(cat "$RUNNER_TEMP/keycloak.pid")"
+
   android:
     name: Android
     runs-on: ubuntu-24.04

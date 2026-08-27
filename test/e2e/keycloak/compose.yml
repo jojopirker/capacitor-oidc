@@ -1,0 +1,17 @@
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.6.4
+    command:
+      - start-dev
+      - --import-realm
+      - --https-port=8443
+      - --https-certificate-file=/opt/keycloak/conf/e2e/server.crt
+      - --https-certificate-key-file=/opt/keycloak/conf/e2e/server.key
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    ports:
+      - '127.0.0.1:8443:8443'
+    volumes:
+      - ./realm.json:/opt/keycloak/data/import/capacitor-oidc-e2e-realm.json:ro
+      - ./.certificates:/opt/keycloak/conf/e2e:ro

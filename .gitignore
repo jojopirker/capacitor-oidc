@@ -7,3 +7,4 @@ android/build/
 android/local.properties
 ios/DerivedData/
 Package.resolved
+test/e2e/keycloak/.certificates/

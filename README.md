@@ -81,6 +81,9 @@ Authorization Code Flow with PKCE.
 the normal `UserManager` from `oidc-client-ts` and select the implementation with
 `Capacitor.isNativePlatform()` in the application.
 
+A runnable Keycloak-backed iOS application and its UI test live in
+[`example`](example).
+
 ## Documentation
 
 - [Getting started](docs/GETTING_STARTED.md)
