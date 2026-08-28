@@ -71,5 +71,6 @@ dependencies {
     implementation "androidx.activity:activity:$androidxActivityVersion"
     implementation "androidx.browser:browser:$androidxBrowserVersion"
     testImplementation "junit:junit:$junitVersion"
+    testImplementation "org.mockito:mockito-core:5.20.0"
     testImplementation "org.json:json:20250517"
 }
