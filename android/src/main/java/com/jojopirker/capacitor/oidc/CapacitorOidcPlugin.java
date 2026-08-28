@@ -28,6 +28,7 @@ public final class CapacitorOidcPlugin extends Plugin {
     private ActivityResultLauncher<Intent> authLauncher;
     private PluginCall pendingAuthCall;
     private Uri pendingCallback;
+    private boolean cancellationPending;
     private TokenVault vault;
 
     @Override
@@ -65,8 +66,7 @@ public final class CapacitorOidcPlugin extends Plugin {
 
         boolean ephemeral = Boolean.TRUE.equals(call.getBoolean("prefersEphemeralWebBrowserSession", false));
         AuthTabIntent authTab = new AuthTabIntent.Builder().setEphemeralBrowsingEnabled(ephemeral).build();
-        pendingAuthCall = call;
-        pendingCallback = callback;
+        beginAuth(call, callback);
 
         try {
             if ("https".equalsIgnoreCase(callback.getScheme())) {
@@ -98,6 +98,16 @@ public final class CapacitorOidcPlugin extends Plugin {
         JSObject response = new JSObject();
         response.put("url", callback.toString());
         call.resolve(response);
+    }
+
+    @Override
+    protected void handleOnResume() {
+        if (!cancellationPending) return;
+
+        // Android delivers both activity results and new intents before the next resume.
+        PluginCall call = pendingAuthCall;
+        clearPendingAuth();
+        if (call != null) call.reject("The authentication session was cancelled.", USER_CANCELLED);
     }
 
     @PluginMethod
@@ -174,32 +184,43 @@ public final class CapacitorOidcPlugin extends Plugin {
     }
 
     private void handleAuthResult(AuthTabIntent.AuthResult result) {
+        handleAuthResult(result.resultCode, result.resultUri);
+    }
+
+    void handleAuthResult(int resultCode, Uri resultUri) {
         PluginCall call = pendingAuthCall;
         Uri expectedCallback = pendingCallback;
-        clearPendingAuth();
         if (call == null) return;
 
-        if (result.resultCode == AuthTabIntent.RESULT_CANCELED) {
-            call.reject("The authentication session was cancelled.", USER_CANCELLED);
+        if (resultCode == AuthTabIntent.RESULT_CANCELED) {
+            cancellationPending = true;
             return;
         }
-        if (result.resultCode != AuthTabIntent.RESULT_OK || result.resultUri == null) {
+        clearPendingAuth();
+        if (resultCode != AuthTabIntent.RESULT_OK || resultUri == null) {
             call.reject("The browser did not return a valid callback.", INVALID_CALLBACK);
             return;
         }
-        if (!CallbackUriMatcher.matches(result.resultUri, expectedCallback)) {
+        if (!CallbackUriMatcher.matches(resultUri, expectedCallback)) {
             call.reject("The authentication callback does not match the configured redirect URL.", INVALID_CALLBACK);
             return;
         }
 
         JSObject response = new JSObject();
-        response.put("url", result.resultUri.toString());
+        response.put("url", resultUri.toString());
         call.resolve(response);
+    }
+
+    void beginAuth(PluginCall call, Uri callback) {
+        pendingAuthCall = call;
+        pendingCallback = callback;
+        cancellationPending = false;
     }
 
     private void clearPendingAuth() {
         pendingAuthCall = null;
         pendingCallback = null;
+        cancellationPending = false;
     }
 
     private static String requiredString(PluginCall call, String name) {
