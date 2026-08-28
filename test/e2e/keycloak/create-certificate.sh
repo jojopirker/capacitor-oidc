@@ -23,3 +23,4 @@ openssl x509 -req -sha256 -days 7 \
   -extfile "$script_dir/server.ext" \
   -out "$certificate_dir/server.crt" \
   >/dev/null 2>&1
+chmod 0644 "$certificate_dir/server.key"

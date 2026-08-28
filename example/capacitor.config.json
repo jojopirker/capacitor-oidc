@@ -1,5 +1,8 @@
 {
   "appId": "io.github.jojopirker.capacitoroidcexample",
   "appName": "Capacitor OIDC",
-  "webDir": "dist"
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "http"
+  }
 }

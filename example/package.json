@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
+    "sync:android": "npm run build && cap sync android",
     "sync:ios": "npm run build && cap sync ios"
   },
   "dependencies": {
@@ -14,6 +15,7 @@
     "oidc-client-ts": "3.5.0"
   },
   "devDependencies": {
+    "@capacitor/android": "8.5.0",
     "@capacitor/cli": "8.4.2",
     "@capacitor/ios": "8.5.0",
     "typescript": "5.9.3",
