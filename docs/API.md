@@ -1,63 +1,60 @@
 # API and `oidc-client-ts` compatibility
 
-`CapacitorUserManager` extends `UserManager` from `oidc-client-ts`. The adapter
-adds a small native-friendly surface and preserves upstream session objects,
-events, settings, refresh, UserInfo, and revocation behavior where they apply to
-a native public client.
+`CapacitorUserManager` extends `UserManager` from `oidc-client-ts`. Applications
+use the package's manager on web, iOS, and Android; the package selects browser or
+native navigation, storage, renewal, and lifecycle behavior.
 
-## Added API
+## Portable API
 
-| API                                                     | Purpose                                                                  |
-| ------------------------------------------------------- | ------------------------------------------------------------------------ |
-| `CapacitorUserManager.create(settings, nativeOptions?)` | Configures native storage and creates the manager.                       |
-| `signin(args?)`                                         | Runs interactive Authorization Code Flow with PKCE in system UI.         |
-| `signout(args?)`                                        | Runs provider logout in system UI.                                       |
-| `getValidUser(minimumValiditySeconds?)`                 | Returns the user or performs one refresh-token renewal.                  |
-| `cancel()`                                              | Rejects the pending native session.                                      |
-| `dispose()`                                             | Stops renewal, removes the app listener, and cancels pending navigation. |
+| API                                          | Purpose                                                       |
+| -------------------------------------------- | ------------------------------------------------------------- |
+| `CapacitorUserManager.create(configuration)` | Resolves the current platform and restores its stored user.   |
+| `signin(args?)`                              | Starts the configured redirect, popup, or native interaction. |
+| `signout(args?)`                             | Starts the configured provider logout interaction.            |
+| `getValidUser(minimumValiditySeconds?)`      | Returns the user or performs one serialized renewal.          |
+| `cancel()`                                   | Cancels pending native navigation; it is a no-op on web.      |
+| `dispose()`                                  | Stops renewal and disposes platform lifecycle work.           |
 
-Only one configured manager and one interactive native authentication session are
-supported at a time.
+`signin()` and `signout()` return `Promise<void>` consistently. Read user state
+through `getUser()`, `getValidUser()`, or `events`. Configuration-level arguments
+are shallowly merged with call-level arguments, with call values taking
+precedence.
 
-## Relevant inherited API
+## Configuration
 
-The following upstream APIs remain available:
+```ts
+interface CapacitorUserManagerConfiguration {
+  common: CapacitorUserManagerCommonSettings;
+  web?: CapacitorWebUserManagerConfiguration;
+  native?: CapacitorNativeUserManagerConfiguration;
+  ios?: CapacitorNativeUserManagerOverride;
+  android?: CapacitorNativeUserManagerOverride;
+}
+```
 
-- `getUser()`, `storeUser()`, and `removeUser()`;
-- `signinSilent()` for refresh-token renewal;
-- `revokeTokens()`;
-- `startSilentRenew()` and `stopSilentRenew()`;
-- `events`, including user-loaded, user-unloaded, token-expiring, token-expired,
-  and silent-renew-error events;
-- the upstream `User`, profile, settings, metadata, UserInfo, and token response
-  types.
+Resolution is `common -> web` in a browser and
+`common -> native -> ios|android` on native platforms. All merges are shallow.
 
-`signinPopup()` and `signoutPopup()` are inherited and use the native navigator,
-but applications should prefer `signin()` and `signout()`.
+The web section accepts public-client `UserManagerSettings`, including custom
+`stateStore` and `userStore`, DPoP, silent iframe settings, and session
+monitoring. It also accepts:
 
-## Unsupported browser API
+```ts
+interface CapacitorWebUserManagerConfiguration {
+  settings: CapacitorWebUserManagerSettings;
+  signinMode?: 'redirect' | 'popup';
+  signoutMode?: 'redirect' | 'popup';
+  signinArgs?: CapacitorSigninArgs;
+  signoutArgs?: CapacitorSignoutArgs;
+}
+```
 
-These inherited browser-oriented methods reject with `UNSUPPORTED_RUNTIME`:
+Popup sign-in defaults its popup callback to `settings.redirect_uri`. Popup
+sign-out requires either `settings.post_logout_redirect_uri` or an explicit
+`settings.popup_post_logout_redirect_uri`, which becomes the popup callback.
 
-- `signinRedirect()`, `signinRedirectCallback()`, and `signinCallback()`;
-- `signinSilentCallback()` and iframe-based silent authentication;
-- `signoutRedirect()`, `signoutRedirectCallback()`, and `signoutCallback()`;
-- `signoutSilent()` and `signoutSilentCallback()`;
-- `querySessionStatus()`;
-- Resource Owner Password Credentials.
-
-The native settings type excludes:
-
-- `client_secret` and `client_authentication`;
-- `disablePKCE` and `response_type`;
-- `dpop`;
-- `monitorSession` and `silent_redirect_uri`;
-- custom `stateStore` and `userStore`.
-
-The adapter forces Authorization Code Flow with PKCE, secure native stores, and
-no iframe session monitoring.
-
-## Native options
+The native section and platform overrides accept native-compatible settings,
+default arguments, and these options:
 
 ```ts
 interface CapacitorOidcNativeOptions {
@@ -70,22 +67,46 @@ interface CapacitorOidcNativeOptions {
 }
 ```
 
-`storageNamespace` defaults to `default`. Use a stable, application-specific
+`storageNamespace` defaults to `default`. Use a stable application-specific
 value and do not change it between releases unless intentionally starting a new
 session store.
 
+All platforms reject `client_secret`, `client_authentication`, `disablePKCE`,
+and `response_type`. The manager forces Authorization Code Flow with PKCE.
+Native settings additionally exclude browser stores, DPoP, iframe callbacks,
+and browser session monitoring.
+
+## Inherited API by platform
+
+| Upstream capability                        | Web                       | iOS and Android                 |
+| ------------------------------------------ | ------------------------- | ------------------------------- |
+| `getUser()`, `storeUser()`, `removeUser()` | Browser stores            | Secure native stores            |
+| `signinRedirect()` and callback            | Supported                 | `UNSUPPORTED_RUNTIME`           |
+| `signinPopup()`                            | Browser popup             | Native system authentication UI |
+| `signinSilent()`                           | Refresh token or iframe   | Refresh token only              |
+| `signoutRedirect()` and callback           | Supported                 | `UNSUPPORTED_RUNTIME`           |
+| `signoutPopup()`                           | Browser popup             | Native system authentication UI |
+| Silent logout and session monitoring       | Supported when configured | `UNSUPPORTED_RUNTIME`           |
+| `revokeTokens()`, UserInfo, and events     | Supported                 | Supported                       |
+| Resource Owner Password Credentials        | Unsupported               | Unsupported                     |
+
+Browser callback dispatch through `signinCallback()` and `signoutCallback()` is
+supported on web. Native callbacks complete inside the system authentication
+session.
+
+The package re-exports `User`, `WebStorageStateStore`, `StateStore`, and
+`UserManagerEvents`, so normal application code does not need to import
+`oidc-client-ts` directly.
+
 ## Adapter error codes
 
-| Code                       | Meaning                                                                  |
-| -------------------------- | ------------------------------------------------------------------------ |
-| `AUTH_SESSION_IN_PROGRESS` | Another native login or logout is active.                                |
-| `USER_CANCELLED`           | The user or application cancelled the system session.                    |
-| `BROWSER_UNAVAILABLE`      | No compatible browser exists or the request endpoint is insecure.        |
-| `INVALID_CALLBACK`         | The callback is absent, malformed, or does not match the configured URI. |
-| `SECURE_STORAGE_ERROR`     | Keychain or Keystore-backed storage failed.                              |
-| `UNSUPPORTED_RUNTIME`      | Web Crypto is unavailable or a browser-only API was called.              |
+| Code                       | Meaning                                                                       |
+| -------------------------- | ----------------------------------------------------------------------------- |
+| `AUTH_SESSION_IN_PROGRESS` | Another native login or logout is active.                                     |
+| `USER_CANCELLED`           | The user or application cancelled the native system session.                  |
+| `BROWSER_UNAVAILABLE`      | No compatible native browser exists or the request endpoint is insecure.      |
+| `INVALID_CALLBACK`         | A native callback is absent, malformed, or does not match the configured URI. |
+| `SECURE_STORAGE_ERROR`     | Keychain or Keystore-backed storage failed.                                   |
+| `UNSUPPORTED_RUNTIME`      | Required platform configuration or capability is unavailable.                 |
 
 OAuth and OIDC server errors remain upstream `oidc-client-ts` errors.
-
-For the complete upstream model and event API, use the
-[`oidc-client-ts` documentation](https://authts.github.io/oidc-client-ts/).

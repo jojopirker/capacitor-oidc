@@ -11,7 +11,7 @@ For every provider:
 1. Create a native, mobile, SPA, or other public client. Do not create or embed a
    client secret.
 2. Enable Authorization Code Flow and PKCE with `S256`.
-3. Register the native redirect and post-logout redirect URIs exactly.
+3. Register every web and native redirect and post-logout redirect URI exactly.
 4. Enable refresh tokens and request the provider's offline-access scope if the
    app must renew sessions.
 5. Allow the app's Capacitor origin through CORS for discovery, token, refresh,
@@ -43,20 +43,33 @@ const domain = 'https://example.auth.eu-central-1.amazoncognito.com';
 const issuer = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
 
 const manager = await CapacitorUserManager.create({
-  authority: issuer,
-  client_id: clientId,
-  redirect_uri: 'com.example.app://oauth',
-  scope: 'openid email profile aws.cognito.signin.user.admin',
-  automaticSilentRenew: true,
-  revokeTokensOnSignout: true,
-  metadata: {
-    issuer,
-    authorization_endpoint: `${domain}/oauth2/authorize`,
-    token_endpoint: `${domain}/oauth2/token`,
-    userinfo_endpoint: `${domain}/oauth2/userInfo`,
-    revocation_endpoint: `${domain}/oauth2/revoke`,
-    end_session_endpoint: `${domain}/logout`,
-    jwks_uri: `${issuer}/.well-known/jwks.json`,
+  common: {
+    authority: issuer,
+    client_id: clientId,
+    scope: 'openid email profile aws.cognito.signin.user.admin',
+    automaticSilentRenew: true,
+    revokeTokensOnSignout: true,
+    metadata: {
+      issuer,
+      authorization_endpoint: `${domain}/oauth2/authorize`,
+      token_endpoint: `${domain}/oauth2/token`,
+      userinfo_endpoint: `${domain}/oauth2/userInfo`,
+      revocation_endpoint: `${domain}/oauth2/revoke`,
+      end_session_endpoint: `${domain}/logout`,
+      jwks_uri: `${issuer}/.well-known/jwks.json`,
+    },
+  },
+  web: {
+    settings: { redirect_uri: 'https://app.example.com/oauth' },
+    signoutArgs: {
+      extraQueryParams: { client_id: clientId, logout_uri: 'https://app.example.com' },
+    },
+  },
+  native: {
+    settings: { redirect_uri: 'com.example.app://oauth' },
+    signoutArgs: {
+      extraQueryParams: { client_id: clientId, logout_uri: 'com.example.app://oauth' },
+    },
   },
 });
 ```
@@ -65,8 +78,8 @@ Configure the Cognito app client without a secret and register
 `com.example.app://oauth` as an allowed callback and sign-out URL.
 
 Cognito logout uses `logout_uri` instead of the standard
-`post_logout_redirect_uri`. Leave `post_logout_redirect_uri` unset in the manager
-settings and pass Cognito's parameters when signing out:
+`post_logout_redirect_uri`. Leave `post_logout_redirect_uri` unset and configure
+the platform-specific default arguments as above, or pass them for one call:
 
 ```ts
 await manager.signout({

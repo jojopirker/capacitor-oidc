@@ -18,6 +18,7 @@ npm run verify:android
 CI currently runs:
 
 - TypeScript linting, Vitest, package builds, and `npm pack --dry-run`;
+- unit coverage for web/native configuration resolution and navigation dispatch;
 - iOS XCTest in an iOS 18.5 simulator;
 - Android unit tests, assembly, and lint with SDK 36;
 - packaged iOS and Android consumer builds with Capacitor 7 and 8;
@@ -35,7 +36,8 @@ also remain incomplete.
 
 ## Required physical-device coverage
 
-Before a stable release, verify on physical iOS and Android devices:
+Before a stable release, verify browser redirects, callbacks, popup navigation,
+renewal, and logout, plus these flows on physical iOS and Android devices:
 
 - system login and logout UI, provider-consent UI, cancellation, and callbacks;
 - Web Crypto availability in the packaged Capacitor WebView;

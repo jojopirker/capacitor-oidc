@@ -15,11 +15,16 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "serviceAccountsEnabled": false,
-      "redirectUris": ["capacitor-oidc-example:/callback", "capacitor-oidc-example:/logout-callback"],
-      "webOrigins": ["capacitor://localhost", "http://localhost"],
+      "redirectUris": [
+        "capacitor-oidc-example:/callback",
+        "capacitor-oidc-example:/logout-callback",
+        "http://localhost:5173/callback",
+        "http://localhost:5173/logout-callback"
+      ],
+      "webOrigins": ["capacitor://localhost", "http://localhost", "http://localhost:5173"],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "capacitor-oidc-example:/logout-callback"
+        "post.logout.redirect.uris": "capacitor-oidc-example:/logout-callback##http://localhost:5173/logout-callback"
       }
     }
   ],

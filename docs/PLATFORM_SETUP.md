@@ -39,12 +39,23 @@ entitlement to the application and extension, then configure the expanded access
 group:
 
 ```ts
-const manager = await CapacitorUserManager.create(settings, {
-  ios: {
-    keychainAccessGroup: 'TEAMID.group.com.example.app',
-    keychainAccessibility: 'afterFirstUnlockThisDeviceOnly',
+const manager = await CapacitorUserManager.create({
+  common: {
+    authority: 'https://identity.example.com',
+    client_id: 'public-app',
   },
-  storageNamespace: 'primary',
+  native: {
+    settings: { redirect_uri: 'com.example.app:/callback' },
+    options: { storageNamespace: 'primary' },
+  },
+  ios: {
+    options: {
+      ios: {
+        keychainAccessGroup: 'TEAMID.group.com.example.app',
+        keychainAccessibility: 'afterFirstUnlockThisDeviceOnly',
+      },
+    },
+  },
 });
 ```
 

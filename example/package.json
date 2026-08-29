@@ -5,14 +5,14 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build",
+    "dev": "vite",
     "sync:android": "npm run build && cap sync android",
     "sync:ios": "npm run build && cap sync ios"
   },
   "dependencies": {
     "@capacitor/app": "8.1.1",
     "@capacitor/core": "8.5.0",
-    "capacitor-oidc": "file:..",
-    "oidc-client-ts": "3.5.0"
+    "capacitor-oidc": "file:.."
   },
   "devDependencies": {
     "@capacitor/android": "8.5.0",

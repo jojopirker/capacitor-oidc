@@ -5,6 +5,15 @@ Keycloak realm in [`test/e2e/keycloak`](../test/e2e/keycloak). Its iOS and
 Android UI tests sign in with Authorization Code Flow and PKCE, force a
 refresh-token renewal, and sign out at the provider.
 
+The same source also runs as a browser application through the universal
+manager. With the local Keycloak realm running, start Vite and open the printed
+localhost URL:
+
+```sh
+npm run e2e:keycloak:up
+npm --prefix example run dev
+```
+
 From the repository root:
 
 ```sh

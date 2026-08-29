@@ -1,4 +1,10 @@
-import type { UserManagerSettings } from 'oidc-client-ts';
+import type {
+  SigninPopupArgs,
+  SigninRedirectArgs,
+  SignoutPopupArgs,
+  SignoutRedirectArgs,
+  UserManagerSettings,
+} from 'oidc-client-ts';
 
 export type CapacitorOidcErrorCode =
   | 'AUTH_SESSION_IN_PROGRESS'
@@ -19,18 +25,88 @@ export interface CapacitorOidcNativeOptions {
   storageNamespace?: string;
 }
 
-type UnsupportedSettings =
-  | 'client_secret'
-  | 'client_authentication'
-  | 'disablePKCE'
+type UnsafePublicClientSettings = 'client_secret' | 'client_authentication' | 'disablePKCE' | 'response_type';
+
+type WebOnlySettings =
+  | 'checkSessionIntervalInSeconds'
   | 'dpop'
+  | 'iframeNotifyParentOrigin'
+  | 'iframeScriptOrigin'
+  | 'includeIdTokenInSilentSignout'
+  | 'monitorAnonymousSession'
   | 'monitorSession'
-  | 'response_type'
+  | 'popup_post_logout_redirect_uri'
+  | 'popup_redirect_uri'
+  | 'popupWindowFeatures'
+  | 'popupWindowTarget'
+  | 'query_status_response_type'
+  | 'redirectMethod'
+  | 'redirectTarget'
   | 'silent_redirect_uri'
+  | 'silentRequestTimeoutInSeconds'
   | 'stateStore'
+  | 'stopCheckSessionOnError'
   | 'userStore';
 
-export type CapacitorUserManagerSettings = Omit<UserManagerSettings, UnsupportedSettings>;
+type PublicClientUserManagerSettings = Omit<UserManagerSettings, UnsafePublicClientSettings>;
+type NativeUserManagerSettings = Omit<PublicClientUserManagerSettings, WebOnlySettings>;
+
+export type CapacitorUserManagerCommonSettings = Omit<
+  PublicClientUserManagerSettings,
+  WebOnlySettings | 'post_logout_redirect_uri' | 'redirect_uri'
+>;
+
+export type CapacitorWebUserManagerSettings = Partial<Omit<PublicClientUserManagerSettings, 'redirect_uri'>> & {
+  redirect_uri: string;
+};
+
+export type CapacitorNativeUserManagerSettings = Partial<Omit<NativeUserManagerSettings, 'redirect_uri'>> & {
+  redirect_uri: string;
+};
+
+export type CapacitorSigninArgs = SigninPopupArgs & SigninRedirectArgs;
+export type CapacitorSignoutArgs = SignoutPopupArgs & SignoutRedirectArgs;
+
+interface CapacitorWebUserManagerConfigurationBase {
+  settings: CapacitorWebUserManagerSettings;
+  signinMode?: 'popup' | 'redirect';
+  signinArgs?: CapacitorSigninArgs;
+  signoutArgs?: CapacitorSignoutArgs;
+}
+
+type PopupSignoutSettings = CapacitorWebUserManagerSettings &
+  ({ popup_post_logout_redirect_uri: string } | { post_logout_redirect_uri: string });
+
+export type CapacitorWebUserManagerConfiguration =
+  | (CapacitorWebUserManagerConfigurationBase & {
+      signoutMode: 'popup';
+      settings: PopupSignoutSettings;
+    })
+  | (CapacitorWebUserManagerConfigurationBase & {
+      signoutMode?: 'redirect';
+    });
+
+export interface CapacitorNativeUserManagerConfiguration {
+  settings: CapacitorNativeUserManagerSettings;
+  options?: CapacitorOidcNativeOptions;
+  signinArgs?: CapacitorSigninArgs;
+  signoutArgs?: CapacitorSignoutArgs;
+}
+
+export interface CapacitorNativeUserManagerOverride {
+  settings?: Partial<CapacitorNativeUserManagerSettings>;
+  options?: CapacitorOidcNativeOptions;
+  signinArgs?: CapacitorSigninArgs;
+  signoutArgs?: CapacitorSignoutArgs;
+}
+
+export interface CapacitorUserManagerConfiguration {
+  common: CapacitorUserManagerCommonSettings;
+  web?: CapacitorWebUserManagerConfiguration;
+  native?: CapacitorNativeUserManagerConfiguration;
+  ios?: CapacitorNativeUserManagerOverride;
+  android?: CapacitorNativeUserManagerOverride;
+}
 
 export interface StoredSessionV1 {
   version: 1;

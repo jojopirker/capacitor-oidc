@@ -1,8 +1,8 @@
 # Documentation
 
-`capacitor-oidc` is a native Capacitor adapter for `oidc-client-ts`. Start with
-[Getting started](GETTING_STARTED.md), then complete the setup for both your
-native platform and identity provider.
+`capacitor-oidc` provides one `oidc-client-ts`-based manager for web, iOS, and
+Android. Start with [Getting started](GETTING_STARTED.md), then complete the
+setup for each native platform and your identity provider.
 
 ## Use the package
 

@@ -7,9 +7,10 @@
 and storing state securely. The package does not patch `fetch`, process JWTs, or
 implement OAuth endpoints in Swift or Java.
 
-Installed applications are public clients. They must use Authorization Code Flow
-with PKCE and must not contain a client secret. Authorization and provider logout
-run in system authentication UI, never an embedded WebView.
+All configured applications are public clients. They use Authorization Code Flow
+with PKCE and cannot contain a client secret. Native authorization and provider
+logout run in system authentication UI, never an embedded WebView; web uses
+normal browser redirect or popup navigation.
 
 ## ID-token validation in `oidc-client-ts` 3.5.0
 
