@@ -53,7 +53,8 @@ DPoP, iframe callbacks, or browser session monitoring.
   and `signoutCallback()`.
 - Platform-specific provider values and interaction arguments can differ without
   duplicating common configuration.
-- The new configuration object and `Promise<void>` sign-in contract are breaking
-  changes to the pre-1.0 native-only API.
+- The pre-1.0 native factory signature is normalized into the new implementation
+  as a deprecated migration path. The `Promise<void>` sign-in contract remains a
+  return-type change for applications that previously used the returned user.
 - The package still owns no OIDC protocol implementation or provider-specific
   behavior.
