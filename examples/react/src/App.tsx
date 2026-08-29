@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CapacitorUserManager, User } from 'capacitor-oidc';
 
-import { getUserManager } from './auth';
+import { completeWebCallback, getUserManager } from './auth';
 
 function errorMessage(error: unknown) {
   return error instanceof Error ? error.message : String(error);
@@ -15,31 +15,43 @@ export function App() {
   const displayName = user?.profile.preferred_username ?? user?.profile.name ?? user?.profile.sub;
 
   useEffect(() => {
+    let active = true;
+    let manager: CapacitorUserManager | undefined;
+    const userLoaded = (loadedUser: User) => {
+      if (!active) return;
+      setUser(loadedUser);
+      setMessage('The session was stored.');
+    };
+    const userUnloaded = () => {
+      if (!active) return;
+      setUser(null);
+      setMessage('The session was cleared.');
+    };
+
     void getUserManager()
-      .then(async (manager) => {
-        auth.current = manager;
-        manager.events.addUserLoaded((loadedUser) => {
-          setUser(loadedUser);
-          setMessage('The session was stored.');
-        });
-        manager.events.addUserUnloaded(() => {
-          setUser(null);
-          setMessage('The session was cleared.');
-        });
+      .then(async (currentManager) => {
+        if (!active) return;
+        manager = currentManager;
+        auth.current = currentManager;
+        currentManager.events.addUserLoaded(userLoaded);
+        currentManager.events.addUserUnloaded(userUnloaded);
 
-        if (window.location.pathname === '/callback') {
-          await manager.signinCallback();
-          window.history.replaceState({}, '', '/');
-        } else if (window.location.pathname === '/logout-callback') {
-          await manager.signoutCallback();
-          window.history.replaceState({}, '', '/');
-        }
-
-        const storedUser = await manager.getUser();
+        await completeWebCallback(currentManager);
+        const storedUser = await currentManager.getUser();
+        if (!active) return;
         setUser(storedUser);
         setMessage(storedUser ? 'The stored session is ready.' : 'No local session is stored.');
       })
-      .catch((error: unknown) => setMessage(errorMessage(error)));
+      .catch((error: unknown) => {
+        if (active) setMessage(errorMessage(error));
+      });
+
+    return () => {
+      active = false;
+      auth.current = null;
+      manager?.events.removeUserLoaded(userLoaded);
+      manager?.events.removeUserUnloaded(userUnloaded);
+    };
   }, []);
 
   function run(label: string, action: () => Promise<void>) {
@@ -76,9 +88,7 @@ export function App() {
       <section className="card" aria-labelledby="title">
         <p className="eyebrow">React + Capacitor</p>
         <h1 id="title">OpenID Connect, one manager</h1>
-        <p className="summary">
-          The same session API runs in the browser and in the native Capacitor shell.
-        </p>
+        <p className="summary">The same session API runs in the browser and in the native Capacitor shell.</p>
 
         <div className="session" aria-live="polite">
           <span className={`status-dot${user ? ' active' : ''}`} aria-hidden="true" />

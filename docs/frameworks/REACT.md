@@ -25,7 +25,7 @@ const manager = CapacitorUserManager.create({
     authority: import.meta.env.VITE_OIDC_AUTHORITY,
     client_id: import.meta.env.VITE_OIDC_CLIENT_ID,
     scope: 'openid profile offline_access',
-    automaticSilentRenew: true,
+    automaticSilentRenew: false,
   },
   web: {
     settings: {
@@ -35,8 +35,8 @@ const manager = CapacitorUserManager.create({
   },
   native: {
     settings: {
-      redirect_uri: 'com.example.oidc.react:/callback',
-      post_logout_redirect_uri: 'com.example.oidc.react:/logout-callback',
+      redirect_uri: 'capacitor-oidc-example:/callback',
+      post_logout_redirect_uri: 'capacitor-oidc-example:/logout-callback',
     },
     options: { storageNamespace: 'react-example' },
   },
@@ -45,10 +45,29 @@ const manager = CapacitorUserManager.create({
 export function getUserManager() {
   return manager;
 }
+
+let callback: Promise<void> | undefined;
+
+export function completeWebCallback(auth: CapacitorUserManager) {
+  callback ??= (async () => {
+    if (window.location.pathname === '/callback') {
+      await auth.signinCallback();
+      window.history.replaceState({}, '', '/');
+    } else if (window.location.pathname === '/logout-callback') {
+      await auth.signoutCallback();
+      window.history.replaceState({}, '', '/');
+    }
+  })();
+
+  return callback;
+}
 ```
 
-The runnable example supplies local Keycloak defaults. Set the two Vite
-environment variables for your provider.
+The runnable example supplies local Keycloak defaults and keeps automatic
+renewal off so its 30-second test tokens can be renewed with the example's
+button. For a normal provider, enable automatic renewal and keep its
+expiry-notification threshold below the provider's access-token lifetime. Set
+the two Vite environment variables for your provider.
 
 ## Initialize from the application root
 
@@ -57,20 +76,26 @@ user from the root component:
 
 ```tsx
 useEffect(() => {
-  void getUserManager().then(async (auth) => {
-    auth.events.addUserLoaded(setUser);
-    auth.events.addUserUnloaded(() => setUser(null));
+  let active = true;
+  let auth: CapacitorUserManager | undefined;
+  const userLoaded = (user: User) => active && setUser(user);
+  const userUnloaded = () => active && setUser(null);
 
-    if (window.location.pathname === '/callback') {
-      await auth.signinCallback();
-      window.history.replaceState({}, '', '/');
-    } else if (window.location.pathname === '/logout-callback') {
-      await auth.signoutCallback();
-      window.history.replaceState({}, '', '/');
-    }
-
-    setUser(await auth.getUser());
+  void getUserManager().then(async (manager) => {
+    if (!active) return;
+    auth = manager;
+    manager.events.addUserLoaded(userLoaded);
+    manager.events.addUserUnloaded(userUnloaded);
+    await completeWebCallback(manager);
+    const storedUser = await manager.getUser();
+    if (active) setUser(storedUser);
   });
+
+  return () => {
+    active = false;
+    auth?.events.removeUserLoaded(userLoaded);
+    auth?.events.removeUserUnloaded(userUnloaded);
+  };
 }, []);
 ```
 
@@ -91,11 +116,15 @@ whole application is shutting down.
 ## Run the example
 
 ```sh
+npm ci
+npm run build
 npm run e2e:keycloak:up
 npm --prefix examples/react install
 npm --prefix examples/react run dev
 ```
 
-The bundled realm accepts web callbacks on `http://localhost:5173`. Add the
-`com.example.oidc.react` scheme before running the example on iOS or Android.
-See [iOS and Android setup](../PLATFORM_SETUP.md).
+The bundled realm accepts web callbacks on `http://localhost:5173` and the
+native `capacitor-oidc-example` callback scheme. Add that scheme before running
+on iOS or Android. Replace it with an application-specific scheme and register
+the replacement at your provider for a real application. See
+[iOS and Android setup](../PLATFORM_SETUP.md).
