@@ -15,4 +15,8 @@ npm --prefix examples/react install
 npm --prefix examples/react run dev
 ```
 
+The bundled localhost authority is for browser development. Set
+`VITE_OIDC_AUTHORITY` to a device-reachable HTTPS authority before creating a
+native build.
+
 Use `npm run build` for the same type-check and production build run in CI.

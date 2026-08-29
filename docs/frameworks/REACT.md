@@ -123,8 +123,9 @@ npm --prefix examples/react install
 npm --prefix examples/react run dev
 ```
 
-The bundled realm accepts web callbacks on `http://localhost:5173` and the
-native `capacitor-oidc-example` callback scheme. Add that scheme before running
-on iOS or Android. Replace it with an application-specific scheme and register
-the replacement at your provider for a real application. See
+This local realm workflow is for the browser example. Android resolves
+`localhost` inside the device or emulator, and native platforms should not use
+the example's cleartext HTTP authority. Before building for iOS or Android, set
+`VITE_OIDC_AUTHORITY` to an HTTPS authority reachable from that device and
+register the configured native callback scheme at the provider. See
 [iOS and Android setup](../PLATFORM_SETUP.md).
