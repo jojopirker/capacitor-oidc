@@ -13,12 +13,22 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
   srcDir: '.',
-  srcExclude: ['node_modules/**', 'dist/**', 'example/node_modules/**', 'example/dist/**'],
+  srcExclude: [
+    'node_modules/**',
+    'dist/**',
+    'example/node_modules/**',
+    'example/dist/**',
+    'examples/**/node_modules/**',
+    'examples/**/dist/**',
+  ],
   ignoreDeadLinks: ['./LICENSE'],
   rewrites: {
     'README.md': 'index.md',
     'docs/README.md': 'docs/index.md',
     'example/README.md': 'example/index.md',
+    'examples/vue/README.md': 'examples/vue/index.md',
+    'examples/react/README.md': 'examples/react/index.md',
+    'examples/angular/README.md': 'examples/angular/index.md',
   },
   markdown: {
     theme: {
@@ -51,6 +61,9 @@ export default defineConfig({
       {
         text: 'Guides',
         items: [
+          { text: 'Vue', link: '/docs/frameworks/VUE' },
+          { text: 'React', link: '/docs/frameworks/REACT' },
+          { text: 'Angular', link: '/docs/frameworks/ANGULAR' },
           { text: 'Sessions and widgets', link: '/docs/SESSIONS_AND_WIDGETS' },
           { text: 'Security', link: '/SECURITY' },
         ],

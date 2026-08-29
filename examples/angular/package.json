@@ -1,0 +1,28 @@
+{
+  "name": "capacitor-oidc-angular-example",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "ng build",
+    "dev": "ng serve --host 0.0.0.0 --port 5173",
+    "preview": "ng serve --configuration production --host 0.0.0.0 --port 5173"
+  },
+  "dependencies": {
+    "@angular/common": "22.1.4",
+    "@angular/compiler": "22.1.4",
+    "@angular/core": "22.1.4",
+    "@angular/platform-browser": "22.1.4",
+    "@capacitor/app": "8.1.1",
+    "@capacitor/core": "8.5.0",
+    "capacitor-oidc": "file:../..",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1"
+  },
+  "devDependencies": {
+    "@angular/build": "22.1.6",
+    "@angular/cli": "22.1.6",
+    "@angular/compiler-cli": "22.1.4",
+    "@capacitor/cli": "8.4.2",
+    "typescript": "6.0.3"
+  }
+}
