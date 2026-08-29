@@ -1,4 +1,14 @@
-export { CapacitorUserManager } from './capacitor-user-manager.js';
+import { CapacitorUserManager, setPlatformUserManagerFactory } from './capacitor-user-manager.js';
+import { NativeCapacitorUserManager } from './native-capacitor-user-manager.js';
+import { WebCapacitorUserManager } from './web-capacitor-user-manager.js';
+
+setPlatformUserManagerFactory((configuration) =>
+  configuration.platform === 'web'
+    ? new WebCapacitorUserManager(configuration)
+    : NativeCapacitorUserManager.fromConfiguration(configuration),
+);
+
+export { CapacitorUserManager };
 export { CapacitorSecureStateStore } from './capacitor-secure-state-store.js';
 export { CapacitorOidcError } from './errors.js';
 export type {

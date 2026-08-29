@@ -1,4 +1,3 @@
-import { Capacitor } from '@capacitor/core';
 import {
   UserManager,
   type INavigator,
@@ -9,22 +8,11 @@ import {
   type User,
 } from 'oidc-client-ts';
 
-import {
-  resolveConfiguration,
-  resolveLegacyNativeConfiguration,
-  type ResolvedUserManagerConfiguration,
-  type RuntimePlatform,
-} from './configuration.js';
-import type {
-  CapacitorOidcNativeOptions,
-  CapacitorSigninArgs,
-  CapacitorSignoutArgs,
-  CapacitorUserManagerConfiguration,
-  CapacitorUserManagerSettings,
-} from './definitions.js';
-import { CapacitorOidcError, unsupported } from './errors.js';
+import type { ResolvedUserManagerConfiguration } from './configuration.js';
+import type { CapacitorSigninArgs, CapacitorSignoutArgs } from './definitions.js';
+import { unsupported } from './errors.js';
 
-export abstract class CapacitorUserManager extends UserManager {
+export abstract class BaseCapacitorUserManager extends UserManager {
   private automaticRenewalPromise?: Promise<User | null>;
   private refreshPromise?: Promise<User | null>;
   private readonly signinMode: 'popup' | 'redirect';
@@ -43,28 +31,6 @@ export abstract class CapacitorUserManager extends UserManager {
     this.signoutMode = configuration.signoutMode;
     this.defaultSigninArgs = configuration.signinArgs;
     this.defaultSignoutArgs = configuration.signoutArgs;
-  }
-
-  static create(configuration: CapacitorUserManagerConfiguration): Promise<CapacitorUserManager>;
-  /** @deprecated Use the platform configuration object. */
-  static create(
-    settings: CapacitorUserManagerSettings,
-    nativeOptions?: CapacitorOidcNativeOptions,
-  ): Promise<CapacitorUserManager>;
-  static async create(
-    configuration: CapacitorUserManagerConfiguration | CapacitorUserManagerSettings,
-    nativeOptions: CapacitorOidcNativeOptions = {},
-  ): Promise<CapacitorUserManager> {
-    assertRuntime();
-    const platform = currentPlatform();
-    const resolved =
-      'redirect_uri' in configuration
-        ? resolveLegacyNativeConfiguration(configuration, nativeOptions, platform)
-        : resolveConfiguration(configuration, platform);
-
-    const manager = await platformUserManagerFactory(resolved);
-    await manager.initialize();
-    return manager;
   }
 
   protected async initialize(): Promise<void> {
@@ -166,26 +132,5 @@ export abstract class CapacitorUserManager extends UserManager {
   private async waitForRenewal(): Promise<void> {
     await this.automaticRenewalPromise?.catch(() => undefined);
     await this.refreshPromise?.catch(() => undefined);
-  }
-}
-
-type PlatformUserManagerFactory = (
-  configuration: ResolvedUserManagerConfiguration,
-) => CapacitorUserManager | Promise<CapacitorUserManager>;
-
-let platformUserManagerFactory: PlatformUserManagerFactory;
-
-export function setPlatformUserManagerFactory(factory: PlatformUserManagerFactory): void {
-  platformUserManagerFactory = factory;
-}
-
-function currentPlatform(): RuntimePlatform {
-  const platform = Capacitor.getPlatform();
-  return platform === 'ios' || platform === 'android' ? platform : 'web';
-}
-
-function assertRuntime(): void {
-  if (!globalThis.crypto?.subtle || !globalThis.crypto.getRandomValues) {
-    throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', 'Web Crypto is required by oidc-client-ts');
   }
 }

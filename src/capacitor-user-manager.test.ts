@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import { ErrorResponse, User, UserManager } from 'oidc-client-ts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { CapacitorUserManager } from './capacitor-user-manager';
 import type {
   CapacitorNativeUserManagerSettings,
   CapacitorOidcNativeOptions,
@@ -10,6 +9,7 @@ import type {
   CapacitorUserManagerConfiguration,
   CapacitorUserManagerSettings,
 } from './definitions';
+import { CapacitorUserManager } from './index';
 
 const storedSessionFixture = JSON.parse(
   readFileSync(new URL('../contracts/fixtures/stored-session-v1.json', import.meta.url), 'utf8'),
