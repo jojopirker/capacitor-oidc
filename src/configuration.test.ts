@@ -110,6 +110,18 @@ describe('resolveConfiguration', () => {
     expect(resolved.settings).not.toHaveProperty('popup_post_logout_redirect_uri');
   });
 
+  it('requires a callback URI for web popup signout', () => {
+    const configuration = {
+      common,
+      web: {
+        settings: { redirect_uri: 'https://app.example/callback' },
+        signoutMode: 'popup',
+      },
+    } as CapacitorUserManagerConfiguration;
+
+    expect(() => resolveConfiguration(configuration, 'web')).toThrow('Web popup signout requires');
+  });
+
   it('requires configuration for the current runtime', () => {
     expect(() => resolveConfiguration({ common, native: undefined }, 'web')).toThrow(
       'No web configuration was provided',
