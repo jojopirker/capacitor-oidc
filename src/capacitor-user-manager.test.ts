@@ -125,6 +125,7 @@ describe('CapacitorUserManager', () => {
       ios: { keychainAccessGroup: 'group.example.app' },
     });
 
+    expect(manager).toBeInstanceOf(CapacitorUserManager);
     expect(manager.settings).toMatchObject({
       authority: settings.authority,
       client_id: settings.client_id,
@@ -654,10 +655,15 @@ describe('CapacitorUserManager', () => {
       },
     });
 
+    expect(manager).toBeInstanceOf(CapacitorUserManager);
     await manager.signin();
     await manager.storeUser(user);
     await manager.signout();
 
+    expect(manager.settings.response_type).toBe('code');
+    expect(manager.settings.disablePKCE).toBe(false);
+    expect(manager.settings.popup_redirect_uri).toBe('https://app.example/popup-callback');
+    expect(manager.settings.popup_post_logout_redirect_uri).toBe('https://app.example/popup-logout-callback');
     expect(signinPopup).toHaveBeenCalledOnce();
     expect(signoutPopup).toHaveBeenCalledOnce();
     expect(setSessionSnapshot).not.toHaveBeenCalled();

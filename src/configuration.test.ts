@@ -82,15 +82,15 @@ describe('resolveConfiguration', () => {
       silent_redirect_uri: 'https://app.example/silent-callback',
       monitorSession: true,
       userStore,
-      response_type: 'code',
-      disablePKCE: false,
     });
+    expect(resolved.settings).not.toHaveProperty('response_type');
+    expect(resolved.settings).not.toHaveProperty('disablePKCE');
     expect(resolved.signinMode).toBe('redirect');
     expect(resolved.signoutMode).toBe('redirect');
     expect(resolved.nativeOptions).toBeUndefined();
   });
 
-  it('fills upstream popup callback settings from the matching redirect URIs', () => {
+  it('leaves popup callback defaults to oidc-client-ts', () => {
     const resolved = resolveConfiguration(
       {
         common,
@@ -106,20 +106,8 @@ describe('resolveConfiguration', () => {
       'web',
     );
 
-    expect(resolved.settings.popup_redirect_uri).toBe('https://app.example/callback');
-    expect(resolved.settings.popup_post_logout_redirect_uri).toBe('https://app.example/logout-callback');
-  });
-
-  it('requires a callback URI for web popup signout', () => {
-    const configuration = {
-      common,
-      web: {
-        settings: { redirect_uri: 'https://app.example/callback' },
-        signoutMode: 'popup',
-      },
-    } as CapacitorUserManagerConfiguration;
-
-    expect(() => resolveConfiguration(configuration, 'web')).toThrow('Web popup signout requires');
+    expect(resolved.settings).not.toHaveProperty('popup_redirect_uri');
+    expect(resolved.settings).not.toHaveProperty('popup_post_logout_redirect_uri');
   });
 
   it('requires configuration for the current runtime', () => {

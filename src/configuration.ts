@@ -46,41 +46,21 @@ export function resolveLegacyNativeConfiguration(
     throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', 'Native configuration does not support dpop');
   }
 
-  return {
-    platform,
-    settings: { ...settings, response_type: 'code', disablePKCE: false, monitorSession: false },
-    nativeOptions,
-    signinMode: 'popup',
-    signoutMode: 'popup',
-    signinArgs: {},
-    signoutArgs: {},
-  };
+  return resolvedNativeConfiguration(platform, settings, nativeOptions);
 }
 
 function resolveWebConfiguration(configuration: CapacitorUserManagerConfiguration): ResolvedUserManagerConfiguration {
   const web = configuration.web;
   if (!web) unsupportedConfiguration('web');
 
-  const signinMode = web.signinMode ?? 'redirect';
-  const signoutMode = web.signoutMode ?? 'redirect';
   const settings: UserManagerSettings = { ...configuration.common, ...web.settings };
   assertPublicClient(settings);
-  if (signinMode === 'popup') settings.popup_redirect_uri ??= settings.redirect_uri;
-  if (signoutMode === 'popup') {
-    settings.popup_post_logout_redirect_uri ??= settings.post_logout_redirect_uri;
-    if (!settings.popup_post_logout_redirect_uri) {
-      throw new CapacitorOidcError(
-        'UNSUPPORTED_RUNTIME',
-        'Web popup signout requires post_logout_redirect_uri or popup_post_logout_redirect_uri',
-      );
-    }
-  }
 
   return {
     platform: 'web',
-    settings: { ...settings, response_type: 'code', disablePKCE: false },
-    signinMode,
-    signoutMode,
+    settings,
+    signinMode: web.signinMode ?? 'redirect',
+    signoutMode: web.signoutMode ?? 'redirect',
     signinArgs: web.signinArgs ?? {},
     signoutArgs: web.signoutArgs ?? {},
   };
@@ -98,14 +78,30 @@ function resolveNativeConfiguration(
   assertPublicClient(settings);
   assertNativeSettings(settings);
 
+  return resolvedNativeConfiguration(
+    platform,
+    settings,
+    { ...native.options, ...override?.options },
+    { ...native.signinArgs, ...override?.signinArgs },
+    { ...native.signoutArgs, ...override?.signoutArgs },
+  );
+}
+
+function resolvedNativeConfiguration(
+  platform: 'android' | 'ios',
+  settings: UserManagerSettings,
+  nativeOptions: CapacitorOidcNativeOptions,
+  signinArgs: CapacitorSigninArgs = {},
+  signoutArgs: CapacitorSignoutArgs = {},
+): ResolvedUserManagerConfiguration {
   return {
     platform,
     settings: { ...settings, response_type: 'code', disablePKCE: false, monitorSession: false },
-    nativeOptions: { ...native.options, ...override?.options },
+    nativeOptions,
     signinMode: 'popup',
     signoutMode: 'popup',
-    signinArgs: { ...native.signinArgs, ...override?.signinArgs },
-    signoutArgs: { ...native.signoutArgs, ...override?.signoutArgs },
+    signinArgs,
+    signoutArgs,
   };
 }
 

@@ -38,10 +38,10 @@ Application
     |
     v
 CapacitorUserManager extends oidc-client-ts UserManager
-    |                                      |
-    v                                      v
-web runtime                            native runtime
-oidc-client-ts navigators/stores       CapacitorNavigator + CapacitorSecureStateStore
+    |
+    +-- internal web manager ------> oidc-client-ts navigators/stores
+    |
+    +-- internal native manager ---> CapacitorNavigator + CapacitorSecureStateStore
                                            |
                                            v
                                    native auth UI + TokenVault
@@ -68,6 +68,12 @@ All protocol networking uses normal global fetch.
 - Refresh serialization and application-resume renewal.
 - Runtime configuration resolution and a small portable API around interactive
   signin and signout.
+
+The exported manager is the common API and factory. It normalizes layered or
+legacy input once, then creates an internal web or native implementation. The web
+implementation owns browser session-monitor disposal. The native implementation
+owns secure storage, native navigation, application lifecycle, and session
+snapshots. Platform behavior does not branch throughout the common manager.
 
 ### This package must not own
 
