@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { resolveConfiguration, resolveLegacyNativeConfiguration } from './configuration';
 import type { CapacitorUserManagerConfiguration, CapacitorUserManagerSettings } from './definitions';
+import { LEGACY_NATIVE_UNSUPPORTED_SETTINGS, WEB_ONLY_SETTINGS } from './user-manager-settings-policy';
 
 const common = {
   authority: 'https://issuer.example',
@@ -150,6 +151,20 @@ describe('resolveConfiguration', () => {
     expect(() => resolveConfiguration(customNativeStore, 'android')).toThrow('userStore');
   });
 
+  it.each(WEB_ONLY_SETTINGS)('rejects the web-only %s setting on native platforms', (setting) => {
+    const configuration = {
+      common,
+      native: {
+        settings: {
+          redirect_uri: 'com.example.app:/callback',
+          [setting]: true,
+        },
+      },
+    } as CapacitorUserManagerConfiguration;
+
+    expect(() => resolveConfiguration(configuration, 'android')).toThrow(setting);
+  });
+
   it('resolves the legacy native settings and options', () => {
     const legacySettings: CapacitorUserManagerSettings = {
       ...common,
@@ -180,5 +195,15 @@ describe('resolveConfiguration', () => {
     expect(() =>
       resolveLegacyNativeConfiguration({ ...common, redirect_uri: 'com.example.app:/callback' }, {}, 'web'),
     ).toThrow('only supported on iOS and Android');
+  });
+
+  it.each(LEGACY_NATIVE_UNSUPPORTED_SETTINGS)('rejects the unsupported legacy %s setting', (setting) => {
+    const legacySettings = {
+      ...common,
+      redirect_uri: 'com.example.app:/callback',
+      [setting]: true,
+    } as CapacitorUserManagerSettings;
+
+    expect(() => resolveLegacyNativeConfiguration(legacySettings, {}, 'ios')).toThrow(setting);
   });
 });

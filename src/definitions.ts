@@ -1,10 +1,10 @@
+import type { ExtraSigninRequestArgs, ExtraSignoutRequestArgs, UserManagerSettings } from 'oidc-client-ts';
+
 import type {
-  SigninPopupArgs,
-  SigninRedirectArgs,
-  SignoutPopupArgs,
-  SignoutRedirectArgs,
-  UserManagerSettings,
-} from 'oidc-client-ts';
+  LegacyNativeUnsupportedSetting,
+  UnsafePublicClientSetting,
+  WebOnlySetting,
+} from './user-manager-settings-policy.js';
 
 export type CapacitorOidcErrorCode =
   | 'AUTH_SESSION_IN_PROGRESS'
@@ -25,46 +25,18 @@ export interface CapacitorOidcNativeOptions {
   storageNamespace?: string;
 }
 
-type UnsafePublicClientSettings = 'client_secret' | 'client_authentication' | 'disablePKCE' | 'response_type';
-
-type LegacyUnsupportedSettings =
-  | UnsafePublicClientSettings
-  | 'dpop'
-  | 'monitorSession'
-  | 'silent_redirect_uri'
-  | 'stateStore'
-  | 'userStore';
-
-type WebOnlySettings =
-  | 'checkSessionIntervalInSeconds'
-  | 'dpop'
-  | 'iframeNotifyParentOrigin'
-  | 'iframeScriptOrigin'
-  | 'includeIdTokenInSilentSignout'
-  | 'monitorAnonymousSession'
-  | 'monitorSession'
-  | 'popup_post_logout_redirect_uri'
-  | 'popup_redirect_uri'
-  | 'popupWindowFeatures'
-  | 'popupWindowTarget'
-  | 'query_status_response_type'
-  | 'redirectMethod'
-  | 'redirectTarget'
-  | 'silent_redirect_uri'
-  | 'silentRequestTimeoutInSeconds'
-  | 'stateStore'
-  | 'stopCheckSessionOnError'
-  | 'userStore';
-
-type PublicClientUserManagerSettings = Omit<UserManagerSettings, UnsafePublicClientSettings>;
-type NativeUserManagerSettings = Omit<PublicClientUserManagerSettings, WebOnlySettings>;
+type PublicClientUserManagerSettings = Omit<UserManagerSettings, UnsafePublicClientSetting>;
+type NativeUserManagerSettings = Omit<PublicClientUserManagerSettings, WebOnlySetting>;
 
 /** @deprecated Use CapacitorUserManagerConfiguration. */
-export type CapacitorUserManagerSettings = Omit<UserManagerSettings, LegacyUnsupportedSettings>;
+export type CapacitorUserManagerSettings = Omit<
+  UserManagerSettings,
+  UnsafePublicClientSetting | LegacyNativeUnsupportedSetting
+>;
 
 export type CapacitorUserManagerCommonSettings = Omit<
   PublicClientUserManagerSettings,
-  WebOnlySettings | 'post_logout_redirect_uri' | 'redirect_uri'
+  WebOnlySetting | 'post_logout_redirect_uri' | 'redirect_uri'
 >;
 
 export type CapacitorWebUserManagerSettings = Partial<Omit<PublicClientUserManagerSettings, 'redirect_uri'>> & {
@@ -75,8 +47,8 @@ export type CapacitorNativeUserManagerSettings = Partial<Omit<NativeUserManagerS
   redirect_uri: string;
 };
 
-export type CapacitorSigninArgs = SigninPopupArgs & SigninRedirectArgs;
-export type CapacitorSignoutArgs = SignoutPopupArgs & SignoutRedirectArgs;
+export type CapacitorSigninArgs = ExtraSigninRequestArgs;
+export type CapacitorSignoutArgs = ExtraSignoutRequestArgs;
 
 interface CapacitorWebUserManagerConfigurationBase {
   settings: CapacitorWebUserManagerSettings;

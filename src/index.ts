@@ -2,10 +2,10 @@ import { CapacitorUserManager, setPlatformUserManagerFactory } from './capacitor
 import { NativeCapacitorUserManager } from './native-capacitor-user-manager.js';
 import { WebCapacitorUserManager } from './web-capacitor-user-manager.js';
 
-setPlatformUserManagerFactory((configuration) =>
+setPlatformUserManagerFactory((configuration, implementation) =>
   configuration.platform === 'web'
-    ? new WebCapacitorUserManager(configuration)
-    : NativeCapacitorUserManager.fromConfiguration(configuration),
+    ? new WebCapacitorUserManager(configuration, implementation)
+    : NativeCapacitorUserManager.fromConfiguration(configuration, implementation),
 );
 
 export { CapacitorUserManager };

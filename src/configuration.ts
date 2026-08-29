@@ -8,6 +8,11 @@ import type {
   CapacitorUserManagerSettings,
 } from './definitions.js';
 import { CapacitorOidcError } from './errors.js';
+import {
+  LEGACY_NATIVE_UNSUPPORTED_SETTINGS,
+  UNSAFE_PUBLIC_CLIENT_SETTINGS,
+  WEB_ONLY_SETTINGS,
+} from './user-manager-settings-policy.js';
 
 export type RuntimePlatform = 'android' | 'ios' | 'web';
 
@@ -42,9 +47,7 @@ export function resolveLegacyNativeConfiguration(
   }
 
   assertPublicClient(settings);
-  if ('dpop' in settings) {
-    throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', 'Native configuration does not support dpop');
-  }
+  assertUnsupportedSettings(settings, LEGACY_NATIVE_UNSUPPORTED_SETTINGS, 'Native configuration');
 
   return resolvedNativeConfiguration(platform, settings, nativeOptions);
 }
@@ -113,20 +116,21 @@ function resolvedNativeConfiguration(
 }
 
 function assertPublicClient(settings: object): void {
-  const unsupported = ['client_authentication', 'client_secret', 'disablePKCE', 'response_type'].find(
-    (key) => key in settings,
-  );
-  if (unsupported) {
-    throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', `Public-client configuration does not support ${unsupported}`);
-  }
+  assertUnsupportedSettings(settings, UNSAFE_PUBLIC_CLIENT_SETTINGS, 'Public-client configuration');
 }
 
 function assertNativeSettings(settings: object): void {
-  const unsupported = ['dpop', 'monitorSession', 'silent_redirect_uri', 'stateStore', 'userStore'].find(
-    (key) => key in settings,
-  );
+  assertUnsupportedSettings(settings, WEB_ONLY_SETTINGS, 'Native configuration');
+}
+
+function assertUnsupportedSettings(
+  settings: object,
+  unsupportedSettings: readonly string[],
+  configurationName: string,
+): void {
+  const unsupported = unsupportedSettings.find((key) => key in settings);
   if (unsupported) {
-    throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', `Native configuration does not support ${unsupported}`);
+    throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', `${configurationName} does not support ${unsupported}`);
   }
 }
 

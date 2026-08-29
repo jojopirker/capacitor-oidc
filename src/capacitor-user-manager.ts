@@ -14,6 +14,14 @@ import type {
 } from './definitions.js';
 import { CapacitorOidcError } from './errors.js';
 
+declare const managerImplementationBrand: unique symbol;
+
+export interface ManagerImplementationToken {
+  readonly [managerImplementationBrand]: true;
+}
+
+const managerImplementationToken = {} as ManagerImplementationToken;
+
 export abstract class CapacitorUserManager extends BaseCapacitorUserManager {
   static create(configuration: CapacitorUserManagerConfiguration): Promise<CapacitorUserManager>;
   /** @deprecated Use the platform configuration object. */
@@ -32,7 +40,7 @@ export abstract class CapacitorUserManager extends BaseCapacitorUserManager {
         ? resolveLegacyNativeConfiguration(configuration, nativeOptions, platform)
         : resolveConfiguration(configuration, platform);
 
-    const manager = await platformUserManagerFactory(resolved);
+    const manager = await platformUserManagerFactory(resolved, managerImplementationToken);
     await manager.initialize();
     return manager;
   }
@@ -40,6 +48,7 @@ export abstract class CapacitorUserManager extends BaseCapacitorUserManager {
 
 type PlatformUserManagerFactory = (
   configuration: ResolvedUserManagerConfiguration,
+  implementation: ManagerImplementationToken,
 ) => CapacitorUserManager | Promise<CapacitorUserManager>;
 
 let platformUserManagerFactory: PlatformUserManagerFactory;

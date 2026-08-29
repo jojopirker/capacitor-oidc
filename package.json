@@ -52,10 +52,11 @@
     "e2e:keycloak:down": "docker compose -f test/e2e/keycloak/compose.yml down",
     "e2e:keycloak:up": "test/e2e/keycloak/create-certificate.sh test/e2e/keycloak/.certificates && docker compose -f test/e2e/keycloak/compose.yml up -d",
     "example:build": "npm --prefix example run build",
-    "lint": "eslint src --ext ts && prettier --check src contracts package.json README.md SECURITY.md docs",
+    "lint": "eslint src test/types --ext ts && prettier --check src test/types contracts package.json tsconfig.type-tests.json README.md SECURITY.md docs",
     "prepack": "npm run build",
     "test": "vitest run",
-    "verify": "npm run lint && npm run test && npm run build && npm run check:package",
+    "typecheck:public-api": "tsc -p tsconfig.type-tests.json",
+    "verify": "npm run lint && npm run typecheck:public-api && npm run test && npm run build && npm run check:package",
     "verify:ios": "xcodebuild -scheme CapacitorOidc -destination generic/platform=iOS CODE_SIGNING_ALLOWED=NO",
     "verify:android": "cd android && ./gradlew clean test assembleDebug"
   },
