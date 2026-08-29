@@ -15,4 +15,8 @@ npm --prefix examples/vue install
 npm --prefix examples/vue run dev
 ```
 
+The bundled localhost authority is for browser development. Set
+`VITE_OIDC_AUTHORITY` to a device-reachable HTTPS authority before creating a
+native build.
+
 Use `npm run build` for the same type-check and production build run in CI.
