@@ -39,6 +39,7 @@ export class OidcService {
 
   async initialize() {
     const auth = await this.manager;
+    this.ready.set(true);
     auth.events.addUserLoaded((loadedUser) => {
       this.user.set(loadedUser);
       this.message.set('The session was stored.');
@@ -59,7 +60,6 @@ export class OidcService {
     const storedUser = await auth.getUser();
     this.user.set(storedUser);
     this.message.set(storedUser ? 'The stored session is ready.' : 'No local session is stored.');
-    this.ready.set(true);
   }
 
   signin() {

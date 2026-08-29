@@ -16,4 +16,8 @@ npm --prefix examples/angular install
 npm --prefix examples/angular run dev
 ```
 
+The bundled localhost authority is for browser development. Replace
+`environment.authority` with a device-reachable HTTPS authority before creating
+a native build.
+
 Use `npm run build` for the same Angular production build run in CI.
