@@ -11,9 +11,13 @@ From the repository root:
 ```sh
 npm ci
 npm run build
+npm run e2e:keycloak:up
 npm --prefix examples/vue install
 npm --prefix examples/vue run dev
 ```
+
+Sign in with the disposable `demo` / `demo` account. Stop the local realm with
+`npm run e2e:keycloak:down` when finished.
 
 The bundled localhost authority is for browser development. Set
 `VITE_OIDC_AUTHORITY` to a device-reachable HTTPS authority before creating a
