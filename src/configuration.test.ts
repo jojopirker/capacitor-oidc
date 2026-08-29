@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { resolveConfiguration } from './configuration';
-import type { CapacitorUserManagerConfiguration } from './definitions';
+import { resolveConfiguration, resolveLegacyNativeConfiguration } from './configuration';
+import type { CapacitorUserManagerConfiguration, CapacitorUserManagerSettings } from './definitions';
 
 const common = {
   authority: 'https://issuer.example',
@@ -148,5 +148,37 @@ describe('resolveConfiguration', () => {
 
     expect(() => resolveConfiguration(secretConfiguration, 'web')).toThrow('client_secret');
     expect(() => resolveConfiguration(customNativeStore, 'android')).toThrow('userStore');
+  });
+
+  it('resolves the legacy native settings and options', () => {
+    const legacySettings: CapacitorUserManagerSettings = {
+      ...common,
+      redirect_uri: 'com.example.app:/callback',
+      post_logout_redirect_uri: 'com.example.app:/logout',
+    };
+    const resolved = resolveLegacyNativeConfiguration(
+      legacySettings,
+      { storageNamespace: 'legacy', prefersEphemeralWebBrowserSession: true },
+      'ios',
+    );
+
+    expect(resolved.settings).toMatchObject({
+      ...legacySettings,
+      response_type: 'code',
+      disablePKCE: false,
+      monitorSession: false,
+    });
+    expect(resolved.nativeOptions).toEqual({
+      storageNamespace: 'legacy',
+      prefersEphemeralWebBrowserSession: true,
+    });
+    expect(resolved.signinMode).toBe('popup');
+    expect(resolved.signoutMode).toBe('popup');
+  });
+
+  it('does not interpret legacy native settings as web configuration', () => {
+    expect(() =>
+      resolveLegacyNativeConfiguration({ ...common, redirect_uri: 'com.example.app:/callback' }, {}, 'web'),
+    ).toThrow('only supported on iOS and Android');
   });
 });

@@ -8,6 +8,7 @@ import type {
   CapacitorOidcNativeOptions,
   CapacitorUserManagerCommonSettings,
   CapacitorUserManagerConfiguration,
+  CapacitorUserManagerSettings,
 } from './definitions';
 
 const storedSessionFixture = JSON.parse(
@@ -114,6 +115,34 @@ describe('CapacitorUserManager', () => {
     configure.mockClear();
     appState.listener = undefined;
     appState.remove.mockClear();
+  });
+
+  it('accepts the legacy native factory signature', async () => {
+    const legacySettings: CapacitorUserManagerSettings = settings;
+    const manager = await CapacitorUserManager.create(legacySettings, {
+      storageNamespace: 'legacy',
+      prefersEphemeralWebBrowserSession: true,
+      ios: { keychainAccessGroup: 'group.example.app' },
+    });
+
+    expect(manager.settings).toMatchObject({
+      authority: settings.authority,
+      client_id: settings.client_id,
+      redirect_uri: settings.redirect_uri,
+      response_type: 'code',
+      disablePKCE: false,
+      monitorSession: false,
+    });
+    expect(configure).toHaveBeenCalledWith({ keychainAccessGroup: 'group.example.app' });
+
+    const user = new User({
+      access_token: 'access',
+      token_type: 'Bearer',
+      profile: { sub: 'subject' },
+    });
+    await manager.storeUser(user);
+    expect(storage.has(storedUserKey('legacy'))).toBe(true);
+    await manager.dispose();
   });
 
   it('returns the manager without waiting for startup renewal', async () => {

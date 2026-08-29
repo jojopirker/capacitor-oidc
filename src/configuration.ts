@@ -5,6 +5,7 @@ import type {
   CapacitorSigninArgs,
   CapacitorSignoutArgs,
   CapacitorUserManagerConfiguration,
+  CapacitorUserManagerSettings,
 } from './definitions.js';
 import { CapacitorOidcError } from './errors.js';
 
@@ -26,6 +27,34 @@ export function resolveConfiguration(
 ): ResolvedUserManagerConfiguration {
   if (platform === 'web') return resolveWebConfiguration(configuration);
   return resolveNativeConfiguration(configuration, platform);
+}
+
+export function resolveLegacyNativeConfiguration(
+  settings: CapacitorUserManagerSettings,
+  nativeOptions: CapacitorOidcNativeOptions,
+  platform: RuntimePlatform,
+): ResolvedUserManagerConfiguration {
+  if (platform === 'web') {
+    throw new CapacitorOidcError(
+      'UNSUPPORTED_RUNTIME',
+      'Legacy CapacitorUserManager settings are only supported on iOS and Android',
+    );
+  }
+
+  assertPublicClient(settings);
+  if ('dpop' in settings) {
+    throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', 'Native configuration does not support dpop');
+  }
+
+  return {
+    platform,
+    settings: { ...settings, response_type: 'code', disablePKCE: false, monitorSession: false },
+    nativeOptions,
+    signinMode: 'popup',
+    signoutMode: 'popup',
+    signinArgs: {},
+    signoutArgs: {},
+  };
 }
 
 function resolveWebConfiguration(configuration: CapacitorUserManagerConfiguration): ResolvedUserManagerConfiguration {

@@ -16,11 +16,18 @@ import {
 
 import { CapacitorNavigator, UnsupportedIframeNavigator } from './capacitor-navigator.js';
 import { CapacitorSecureStateStore } from './capacitor-secure-state-store.js';
-import { resolveConfiguration, type ResolvedUserManagerConfiguration, type RuntimePlatform } from './configuration.js';
+import {
+  resolveConfiguration,
+  resolveLegacyNativeConfiguration,
+  type ResolvedUserManagerConfiguration,
+  type RuntimePlatform,
+} from './configuration.js';
 import type {
+  CapacitorOidcNativeOptions,
   CapacitorSigninArgs,
   CapacitorSignoutArgs,
   CapacitorUserManagerConfiguration,
+  CapacitorUserManagerSettings,
   StoredSessionV1,
 } from './definitions.js';
 import { CapacitorOidcError, unsupported } from './errors.js';
@@ -82,9 +89,22 @@ export class CapacitorUserManager extends UserManager {
     this.sessionMonitor = this.captureSessionMonitor();
   }
 
-  static async create(configuration: CapacitorUserManagerConfiguration): Promise<CapacitorUserManager> {
+  static create(configuration: CapacitorUserManagerConfiguration): Promise<CapacitorUserManager>;
+  /** @deprecated Use the platform configuration object. */
+  static create(
+    settings: CapacitorUserManagerSettings,
+    nativeOptions?: CapacitorOidcNativeOptions,
+  ): Promise<CapacitorUserManager>;
+  static async create(
+    configuration: CapacitorUserManagerConfiguration | CapacitorUserManagerSettings,
+    nativeOptions: CapacitorOidcNativeOptions = {},
+  ): Promise<CapacitorUserManager> {
     assertRuntime();
-    const resolved = resolveConfiguration(configuration, currentPlatform());
+    const platform = currentPlatform();
+    const resolved =
+      'redirect_uri' in configuration
+        ? resolveLegacyNativeConfiguration(configuration, nativeOptions, platform)
+        : resolveConfiguration(configuration, platform);
     if (resolved.platform !== 'web') await NativeOidc.configure(resolved.nativeOptions?.ios ?? {});
 
     const manager = new CapacitorUserManager(resolved);
