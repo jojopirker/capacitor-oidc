@@ -36,6 +36,7 @@ export class CapacitorUserManager extends UserManager {
   private readonly signoutMode: 'popup' | 'redirect';
   private readonly defaultSigninArgs: CapacitorSigninArgs;
   private readonly defaultSignoutArgs: CapacitorSignoutArgs;
+  private disposed = false;
 
   private constructor(configuration: ResolvedUserManagerConfiguration) {
     const isNative = configuration.platform !== 'web';
@@ -175,6 +176,7 @@ export class CapacitorUserManager extends UserManager {
 
   override async querySessionStatus(args: QuerySessionStatusArgs = {}): Promise<SessionStatus | null> {
     if (this.isNative) unsupported('Browser session monitoring');
+    if (this.disposed) return null;
     return super.querySessionStatus(args);
   }
 
@@ -210,10 +212,17 @@ export class CapacitorUserManager extends UserManager {
   }
 
   async dispose(): Promise<void> {
+    this.disposed = true;
     this.stopSilentRenew();
+    this.stopSessionMonitor();
     await this.appStateListener?.remove();
     await this.waitForRenewal();
     await this.cancel();
+  }
+
+  private stopSessionMonitor(): void {
+    // oidc-client-ts does not expose public session-monitor teardown.
+    (this._sessionMonitor as unknown as { _stop(): void } | null)?._stop();
   }
 
   private checkForAutomaticRenewal(): void {

@@ -637,4 +637,31 @@ describe('CapacitorUserManager', () => {
     signoutPopup.mockRestore();
     await manager.dispose();
   });
+
+  it('stops web session monitoring during disposal', async () => {
+    runtime.platform = 'web';
+    const manager = await CapacitorUserManager.create({
+      common: {
+        authority: settings.authority,
+        client_id: 'web-monitored',
+        automaticSilentRenew: false,
+      },
+      web: {
+        settings: {
+          redirect_uri: 'https://app.example/callback',
+          monitorSession: true,
+        },
+      },
+    });
+    const sessionMonitor = (
+      manager as unknown as {
+        _sessionMonitor: { _stop(): void };
+      }
+    )._sessionMonitor;
+    const stop = vi.spyOn(sessionMonitor, '_stop');
+
+    await manager.dispose();
+
+    expect(stop).toHaveBeenCalledOnce();
+  });
 });
