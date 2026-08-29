@@ -7,7 +7,7 @@ export default defineConfig({
   description: 'Native OAuth 2.0 and OpenID Connect for Capacitor on iOS and Android.',
   lang: 'en-US',
   base: '/capacitor-oidc/',
-  appearance: 'dark',
+  appearance: 'force-auto',
   cleanUrls: true,
   lastUpdated: true,
   srcDir: '.',
@@ -25,6 +25,7 @@ export default defineConfig({
     },
   },
   themeConfig: {
+    logo: '/logo.png',
     nav: [
       { text: 'Docs', link: '/docs/GETTING_STARTED' },
       { text: 'API', link: '/docs/API' },

@@ -1,103 +1,13 @@
 :root {
-  --vp-c-brand-1: #0f9f70;
-  --vp-c-brand-2: #0b8c62;
-  --vp-c-brand-3: #087a55;
-  --vp-c-brand-soft: rgb(15 159 112 / 12%);
-  --vp-c-bg: #ffffff;
-  --vp-c-bg-alt: #f7f8f8;
-  --vp-c-bg-elv: #ffffff;
-  --vp-c-bg-soft: #f3f5f4;
-  --vp-c-divider: rgb(16 24 20 / 10%);
-  --vp-c-gutter: rgb(16 24 20 / 8%);
-  --vp-c-border: rgb(16 24 20 / 14%);
-  --vp-nav-height: 56px;
-  --vp-sidebar-width: 288px;
-  --vp-layout-max-width: 1600px;
-  --docs-surface-shadow: 0 0 0 1px rgb(0 0 0 / 6%), 0 1px 2px -1px rgb(0 0 0 / 6%), 0 2px 4px rgb(0 0 0 / 4%);
+  --vp-c-brand-1: #4a2c20;
+  --vp-c-brand-2: #5f3827;
+  --vp-c-brand-3: #74432d;
+  --vp-c-brand-soft: rgb(102 115 60 / 14%);
 }
 
 .dark {
-  --vp-c-brand-1: #20c98b;
-  --vp-c-brand-2: #28d99a;
-  --vp-c-brand-3: #63e6b4;
-  --vp-c-brand-soft: rgb(32 201 139 / 11%);
-  --vp-c-bg: #000000;
-  --vp-c-bg-alt: #050605;
-  --vp-c-bg-elv: #090b0a;
-  --vp-c-bg-soft: #0d100f;
-  --vp-c-divider: rgb(255 255 255 / 9%);
-  --vp-c-gutter: rgb(255 255 255 / 7%);
-  --vp-c-border: rgb(255 255 255 / 12%);
-  --vp-code-block-bg: #080a09;
-  --docs-surface-shadow: 0 0 0 1px rgb(255 255 255 / 8%);
-}
-
-html {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.VPNavBar {
-  background: rgb(255 255 255 / 78%);
-  backdrop-filter: blur(14px);
-}
-
-.dark .VPNavBar {
-  background: rgb(0 0 0 / 76%);
-}
-
-.VPSidebar {
-  background: var(--vp-c-bg);
-}
-
-.VPDoc .content-container {
-  max-width: 800px;
-}
-
-.vp-doc h1,
-.vp-doc h2,
-.vp-doc h3 {
-  letter-spacing: -0.025em;
-  text-wrap: balance;
-}
-
-.vp-doc p,
-.vp-doc li,
-.vp-doc blockquote {
-  text-wrap: pretty;
-}
-
-.vp-doc a {
-  text-decoration-thickness: 1px;
-  text-underline-offset: 3px;
-}
-
-.vp-doc div[class*='language-'],
-.vp-doc .custom-block {
-  border: 0;
-  border-radius: 10px;
-  box-shadow: var(--docs-surface-shadow);
-}
-
-.vp-doc img {
-  border-radius: 10px;
-  outline: 1px solid rgb(0 0 0 / 10%);
-  outline-offset: -1px;
-}
-
-.dark .vp-doc img {
-  outline-color: rgb(255 255 255 / 10%);
-}
-
-.VPSidebarItem.level-1.is-active > .item {
-  border-radius: 8px;
-  background: var(--vp-c-brand-soft);
-}
-
-.VPSidebarItem .item,
-.VPNavBarMenuLink,
-.VPNavBarMenuGroup .button {
-  transition-property: color, background-color;
-  transition-duration: 150ms;
-  transition-timing-function: ease-out;
+  --vp-c-brand-1: #d6a88f;
+  --vp-c-brand-2: #a86d4e;
+  --vp-c-brand-3: #70422e;
+  --vp-c-brand-soft: rgb(102 115 60 / 18%);
 }

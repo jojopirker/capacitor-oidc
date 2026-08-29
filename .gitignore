@@ -2,6 +2,7 @@ node_modules/
 dist/
 .build/
 .DS_Store
+.vitepress/cache/
 android/.gradle/
 android/build/
 android/local.properties
