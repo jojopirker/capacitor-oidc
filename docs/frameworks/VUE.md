@@ -1,0 +1,107 @@
+# Vue integration
+
+The [Vue example](/examples/vue/) is a small Capacitor application with one
+OIDC manager for the application lifetime. It restores the stored user when
+Vue mounts, completes browser callbacks, and exposes sign-in, renewal, and
+sign-out actions.
+
+## Install
+
+```sh
+npm install capacitor-oidc @capacitor/app
+npx cap sync
+```
+
+## Create the manager once
+
+Keep manager creation outside Vue components so route changes cannot create a
+second manager:
+
+```ts
+// src/auth.ts
+import { CapacitorUserManager } from 'capacitor-oidc';
+
+const manager = CapacitorUserManager.create({
+  common: {
+    authority: import.meta.env.VITE_OIDC_AUTHORITY,
+    client_id: import.meta.env.VITE_OIDC_CLIENT_ID,
+    scope: 'openid profile offline_access',
+    automaticSilentRenew: true,
+  },
+  web: {
+    settings: {
+      redirect_uri: `${window.location.origin}/callback`,
+      post_logout_redirect_uri: `${window.location.origin}/logout-callback`,
+    },
+  },
+  native: {
+    settings: {
+      redirect_uri: 'com.example.oidc.vue:/callback',
+      post_logout_redirect_uri: 'com.example.oidc.vue:/logout-callback',
+    },
+    options: { storageNamespace: 'vue-example' },
+  },
+});
+
+export function getUserManager() {
+  return manager;
+}
+```
+
+The runnable example supplies local Keycloak defaults as a convenience. Use
+environment variables for your provider in an application.
+
+## Restore state and handle callbacks
+
+Initialize authentication from the root component. Browser callback routes
+must be handled before rendering the restored user:
+
+```ts
+const auth = await getUserManager();
+
+if (window.location.pathname === '/callback') {
+  await auth.signinCallback();
+  window.history.replaceState({}, '', '/');
+} else if (window.location.pathname === '/logout-callback') {
+  await auth.signoutCallback();
+  window.history.replaceState({}, '', '/');
+}
+
+user.value = await auth.getUser();
+
+auth.events.addUserLoaded((loadedUser) => {
+  user.value = loadedUser;
+});
+
+auth.events.addUserUnloaded(() => {
+  user.value = null;
+});
+```
+
+Native callbacks are completed by the plugin and do not need Vue Router
+routes.
+
+## Bind actions
+
+```ts
+await auth.signin();
+user.value = await auth.getValidUser(60);
+await auth.signout();
+```
+
+Call `dispose()` only when the application is shutting down, not whenever a
+route component unmounts.
+
+## Run the example
+
+Start the repository's local Keycloak realm, then start the Vue app:
+
+```sh
+npm run e2e:keycloak:up
+npm --prefix examples/vue install
+npm --prefix examples/vue run dev
+```
+
+The bundled realm accepts the web callbacks on `http://localhost:5173` and the
+native `com.example.oidc.vue` callback scheme must be added before running an
+iOS or Android build. See [iOS and Android setup](../PLATFORM_SETUP.md).
