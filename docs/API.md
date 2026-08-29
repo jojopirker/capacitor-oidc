@@ -49,9 +49,11 @@ interface CapacitorWebUserManagerConfiguration {
 }
 ```
 
-Popup sign-in defaults its popup callback to `settings.redirect_uri`. Popup
-sign-out requires either `settings.post_logout_redirect_uri` or an explicit
-`settings.popup_post_logout_redirect_uri`, which becomes the popup callback.
+`oidc-client-ts` defaults popup sign-in and sign-out callbacks from
+`settings.redirect_uri` and `settings.post_logout_redirect_uri`. Popup sign-out
+requires either `settings.post_logout_redirect_uri` or
+`settings.popup_post_logout_redirect_uri`. Set the popup-specific URI only when
+it needs to differ.
 
 The native section and platform overrides accept native-compatible settings,
 default arguments, and these options:

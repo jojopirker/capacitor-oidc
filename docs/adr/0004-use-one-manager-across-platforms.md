@@ -41,6 +41,10 @@ uses `CapacitorNavigator`, secure stores, refresh-token-only renewal, and the ap
 resume listener. `signin()` and `signout()` return `Promise<void>` on all
 platforms; applications read session state through events or user accessors.
 
+The public manager is a common base and factory backed by internal web and
+native implementations. Legacy native input is normalized before implementation
+selection, so both factory signatures use the same native behavior.
+
 All platforms remain public clients using code flow with PKCE. Web-only
 capabilities stay in the web settings. Native does not accept custom stores,
 DPoP, iframe callbacks, or browser session monitoring.

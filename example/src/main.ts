@@ -93,4 +93,6 @@ signout.addEventListener('click', () => {
   void run('Opening provider logout…', () => manager.signout()).catch(report);
 });
 
-render(await manager.getUser());
+const user = await manager.getUser();
+signin.textContent = 'Sign in with Keycloak';
+render(user);
