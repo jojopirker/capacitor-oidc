@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "build": "ng build",
-    "dev": "ng serve --host 0.0.0.0",
-    "preview": "ng serve --configuration production --host 0.0.0.0"
+    "dev": "ng serve --host 0.0.0.0 --port 5173",
+    "preview": "ng serve --configuration production --host 0.0.0.0 --port 5173"
   },
   "dependencies": {
     "@angular/common": "22.1.4",

@@ -18,7 +18,7 @@ export class OidcService {
       authority: environment.authority,
       client_id: environment.clientId,
       scope: 'openid profile offline_access',
-      automaticSilentRenew: true,
+      automaticSilentRenew: false,
       loadUserInfo: true,
       revokeTokensOnSignout: true,
     },
@@ -30,8 +30,8 @@ export class OidcService {
     },
     native: {
       settings: {
-        redirect_uri: 'com.example.oidc.angular:/callback',
-        post_logout_redirect_uri: 'com.example.oidc.angular:/logout-callback',
+        redirect_uri: 'capacitor-oidc-example:/callback',
+        post_logout_redirect_uri: 'capacitor-oidc-example:/logout-callback',
       },
       options: { storageNamespace: 'angular-example' },
     },

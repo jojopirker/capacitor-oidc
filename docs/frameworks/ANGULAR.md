@@ -38,7 +38,7 @@ export class OidcService {
       authority: environment.authority,
       client_id: environment.clientId,
       scope: 'openid profile offline_access',
-      automaticSilentRenew: true,
+      automaticSilentRenew: false,
     },
     web: {
       settings: {
@@ -48,14 +48,19 @@ export class OidcService {
     },
     native: {
       settings: {
-        redirect_uri: 'com.example.oidc.angular:/callback',
-        post_logout_redirect_uri: 'com.example.oidc.angular:/logout-callback',
+        redirect_uri: 'capacitor-oidc-example:/callback',
+        post_logout_redirect_uri: 'capacitor-oidc-example:/logout-callback',
       },
       options: { storageNamespace: 'angular-example' },
     },
   });
 }
 ```
+
+The runnable example keeps automatic renewal off so the bundled realm's
+30-second test tokens can be renewed with the example's button. For a normal
+provider, enable automatic renewal and keep its expiry-notification threshold
+below the provider's access-token lifetime.
 
 ## Initialize from the root component
 
@@ -106,12 +111,16 @@ Call `dispose()` only when the Angular application is shutting down.
 ## Run the example
 
 ```sh
+npm ci
+npm run build
 npm run e2e:keycloak:up
 npm --prefix examples/angular install
 npm --prefix examples/angular run dev
 ```
 
 The example environment targets the bundled Keycloak realm and its web
-callbacks on `http://localhost:5173`. Add the `com.example.oidc.angular` scheme
-before running on iOS or Android. See
+callbacks on `http://localhost:5173`. It also uses the realm's registered native
+`capacitor-oidc-example` callback scheme. Add that scheme before running on iOS
+or Android. Replace it with an application-specific scheme and register the
+replacement at your provider for a real application. See
 [iOS and Android setup](../PLATFORM_SETUP.md).
