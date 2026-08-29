@@ -12,9 +12,9 @@ import {
   type User,
 } from 'oidc-client-ts';
 
+import { CapacitorUserManager } from './base-capacitor-user-manager.js';
 import { CapacitorNavigator, UnsupportedIframeNavigator } from './capacitor-navigator.js';
 import { CapacitorSecureStateStore } from './capacitor-secure-state-store.js';
-import { CapacitorUserManager } from './capacitor-user-manager.js';
 import type { ResolvedUserManagerConfiguration } from './configuration.js';
 import type { StoredSessionV1 } from './definitions.js';
 import { unsupported } from './errors.js';

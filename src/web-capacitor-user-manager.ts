@@ -1,6 +1,6 @@
 import { type QuerySessionStatusArgs, type SessionStatus, type User } from 'oidc-client-ts';
 
-import { CapacitorUserManager } from './capacitor-user-manager.js';
+import { CapacitorUserManager } from './base-capacitor-user-manager.js';
 import type { ResolvedUserManagerConfiguration } from './configuration.js';
 
 interface SessionMonitorLifecycle {
