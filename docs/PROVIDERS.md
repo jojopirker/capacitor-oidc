@@ -1,33 +1,27 @@
 # Provider configuration
 
-`capacitor-oidc` works with providers that support Authorization Code Flow with
-PKCE for public clients and permit token-related requests from the configured
-Capacitor origin.
+The recipes below cover the settings that differ between providers.
+`capacitor-oidc` does not contain provider-specific protocol code; it passes the
+configured OpenID Connect settings to `oidc-client-ts`.
 
-## Provider checklist
+## Requirements
 
-For every provider:
+Use a public client that supports Authorization Code Flow with `S256` PKCE.
+Register every web and native redirect URI and post-logout redirect URI exactly,
+and configure the provider application without a client secret. A secret cannot
+be kept in a Capacitor app.
 
-1. Create a native, mobile, SPA, or other public client. Do not create or embed a
-   client secret.
-2. Enable Authorization Code Flow and PKCE with `S256`.
-3. Register every web and native redirect and post-logout redirect URI exactly.
-4. Enable refresh tokens and request the provider's offline-access scope if the
-   app must renew sessions.
-5. Allow the app's Capacitor origin through CORS for discovery, token, refresh,
-   UserInfo, and revocation endpoints used by your configuration.
-6. Use HTTPS for provider endpoints.
+If the app refreshes or revokes tokens, or loads UserInfo from the Capacitor
+runtime, the provider must allow the configured Capacitor origin to call those
+endpoints. Request `offline_access`, or the provider's equivalent, when the app
+needs refresh tokens. Use HTTPS outside local test environments.
 
-The recipes below identify the relevant authority and provider-console choices.
-They do not replace the provider's own security guidance.
+## Test status
 
-| Provider           | Current package validation                                      |
-| ------------------ | --------------------------------------------------------------- |
-| Amazon Cognito     | Basic login tested on a physical iOS device; edge cases remain. |
-| Auth0              | Configuration guidance only.                                    |
-| Keycloak           | Configuration guidance only.                                    |
-| Okta               | Configuration guidance only.                                    |
-| Microsoft Entra ID | Configuration guidance only.                                    |
+The basic Amazon Cognito sign-in flow has been tested on a physical iOS device.
+The Auth0, Keycloak, Okta, and Microsoft Entra ID sections document expected
+configuration, but those recipes are not yet covered by the package's provider
+integration tests.
 
 ## Amazon Cognito
 
@@ -188,7 +182,7 @@ and [redirect URI restrictions](https://learn.microsoft.com/en-us/entra/identity
 
 ## Other providers
 
-Start with the generic checklist and the provider's OpenID Connect discovery
+Start with the requirements above and the provider's OpenID Connect discovery
 document. If discovery does not describe a usable native flow, pass explicit
 `metadata` through the upstream `UserManagerSettings` rather than adding
 provider-specific code to this package.
