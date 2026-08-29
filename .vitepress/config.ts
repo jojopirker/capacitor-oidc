@@ -1,12 +1,14 @@
 import { defineConfig } from 'vitepress';
 
 const repository = 'https://github.com/jojopirker/capacitor-oidc';
+const base = '/capacitor-oidc/';
 
 export default defineConfig({
   title: 'capacitor-oidc',
   description: 'Native OAuth 2.0 and OpenID Connect for Capacitor on iOS and Android.',
   lang: 'en-US',
-  base: '/capacitor-oidc/',
+  base,
+  head: [['link', { rel: 'icon', type: 'image/png', href: `${base}logo.png` }]],
   appearance: 'force-auto',
   cleanUrls: true,
   lastUpdated: true,
