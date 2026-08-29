@@ -27,6 +27,14 @@ export interface CapacitorOidcNativeOptions {
 
 type UnsafePublicClientSettings = 'client_secret' | 'client_authentication' | 'disablePKCE' | 'response_type';
 
+type LegacyUnsupportedSettings =
+  | UnsafePublicClientSettings
+  | 'dpop'
+  | 'monitorSession'
+  | 'silent_redirect_uri'
+  | 'stateStore'
+  | 'userStore';
+
 type WebOnlySettings =
   | 'checkSessionIntervalInSeconds'
   | 'dpop'
@@ -50,6 +58,9 @@ type WebOnlySettings =
 
 type PublicClientUserManagerSettings = Omit<UserManagerSettings, UnsafePublicClientSettings>;
 type NativeUserManagerSettings = Omit<PublicClientUserManagerSettings, WebOnlySettings>;
+
+/** @deprecated Use CapacitorUserManagerConfiguration. */
+export type CapacitorUserManagerSettings = Omit<UserManagerSettings, LegacyUnsupportedSettings>;
 
 export type CapacitorUserManagerCommonSettings = Omit<
   PublicClientUserManagerSettings,

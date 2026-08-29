@@ -76,6 +76,29 @@ and `response_type`. The manager forces Authorization Code Flow with PKCE.
 Native settings additionally exclude browser stores, DPoP, iframe callbacks,
 and browser session monitoring.
 
+### Legacy native configuration
+
+The native-only factory signature from earlier releases remains available so an
+application can upgrade before moving its configuration:
+
+```ts
+const manager = await CapacitorUserManager.create(
+  {
+    authority: 'https://identity.example.com',
+    client_id: 'mobile-app',
+    redirect_uri: 'com.example.app:/callback',
+    scope: 'openid profile offline_access',
+  },
+  { storageNamespace: 'primary' },
+);
+```
+
+This signature and `CapacitorUserManagerSettings` are deprecated. They remain
+native-only and do not infer browser settings. New code should use the layered
+configuration above. `signin()` now returns `Promise<void>` for every factory
+signature; use `getUser()`, `getValidUser()`, or events to read the signed-in
+user.
+
 ## Inherited API by platform
 
 | Upstream capability                        | Web                       | iOS and Android                 |
