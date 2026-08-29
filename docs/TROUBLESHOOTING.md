@@ -15,6 +15,12 @@ The authorization request's `redirect_uri` must exactly match a callback
 registered for the provider client. Check scheme, host, port, path, case, and
 trailing slashes. Wildcard callback hosts are commonly unsupported.
 
+## Web login returns without a user
+
+Make the configured web callback route call `signinCallback()`. A logout callback
+route must call `signoutCallback()` instead. Both routes must use exactly the URI
+registered with the provider.
+
 ## Android does not return to the app
 
 - Keep `MainActivity` in `singleTask` launch mode.
@@ -33,9 +39,10 @@ and that the callback scheme is registered in the target.
 
 ## Token, UserInfo, refresh, or revocation fails with a network error
 
-These requests use the WebView's normal `fetch`. Configure the provider endpoint
-to allow the app's Capacitor origin through CORS. Static discovery metadata does
-not remove CORS requirements from token, UserInfo, refresh, or revocation calls.
+These requests use the runtime's normal `fetch`. Configure the provider endpoint
+to allow both web application and Capacitor origins through CORS. Static discovery
+metadata does not remove CORS requirements from token, UserInfo, refresh, or
+revocation calls.
 
 ## No refresh token is available
 
@@ -43,22 +50,25 @@ not remove CORS requirements from token, UserInfo, refresh, or revocation calls.
 - Enable the refresh-token grant for the public client.
 - Check provider-specific consent and rotation settings.
 
-When the current user is expired and has no refresh token, `getValidUser()`
-removes the local user and returns `null`.
+On native platforms, an expired user without a refresh token is removed and
+`getValidUser()` returns `null`. Web behavior follows the configured upstream
+silent-renew settings and may use an iframe.
 
 ## Startup renewal fails
 
-`CapacitorUserManager.create()` restores secure local state but does not wait for
-token renewal. When `automaticSilentRenew` is enabled, a required startup renewal
-runs asynchronously and reports failures through `silentRenewError`. Temporary
-token-endpoint failures preserve the stored session; a terminal `invalid_grant`
-removes it.
+On native platforms, `CapacitorUserManager.create()` restores secure local state
+but does not wait for token renewal. When `automaticSilentRenew` is enabled, a
+required startup renewal runs asynchronously and reports failures through
+`silentRenewError`. Temporary token-endpoint failures preserve the stored
+session; a terminal `invalid_grant` removes it. Web automatic renewal follows
+`oidc-client-ts` behavior.
 
 ## Logout does not return to the app
 
-Register the post-logout URI at the provider and in the native application. Some
-providers use non-standard parameters. Amazon Cognito uses `logout_uri`; see
-[Provider configuration](PROVIDERS.md#amazon-cognito).
+Register the post-logout URI at the provider, add the browser callback route, and
+register native schemes in each native application. Some providers use
+non-standard parameters. Amazon Cognito uses `logout_uri`; see [Provider
+configuration](PROVIDERS.md#amazon-cognito).
 
 ## `USER_CANCELLED` appears but Android UI remains visible
 

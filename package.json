@@ -1,7 +1,7 @@
 {
   "name": "capacitor-oidc",
   "version": "0.0.6",
-  "description": "Capacitor plugin for native OAuth 2.0 and OpenID Connect authentication on iOS and Android, powered by oidc-client-ts.",
+  "description": "OAuth 2.0 and OpenID Connect authentication for Capacitor web, iOS, and Android, powered by oidc-client-ts.",
   "keywords": [
     "capacitor",
     "capacitor-plugin",
@@ -11,6 +11,7 @@
     "openid-connect",
     "oidc",
     "pkce",
+    "web",
     "ios",
     "android",
     "oidc-client-ts"

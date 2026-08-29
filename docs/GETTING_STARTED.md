@@ -2,19 +2,18 @@
 
 ## 1. Configure a public client
 
-Create a native or public client at your identity provider with:
+Create a public client at your identity provider with:
 
 - Authorization Code Flow enabled;
 - PKCE with the `S256` challenge method;
 - no client secret;
-- an exact native redirect URI, such as `com.example.app:/callback`;
-- an exact post-logout redirect URI when the provider supports one;
+- every web, iOS, and Android redirect URI registered exactly;
+- every post-logout redirect URI registered exactly;
 - the `openid` scope and any application scopes you need;
-- a refresh-token or offline-access grant if the app must renew sessions.
+- refresh tokens or offline access when the app must renew sessions.
 
-The redirect URI must be registered at the provider and in the native app. A
-minor difference in scheme, host, path, casing, or slash placement can prevent
-the callback from completing.
+A minor difference in scheme, host, path, casing, or slash placement can prevent
+a callback from completing.
 
 ## 2. Install the package
 
@@ -23,57 +22,95 @@ npm install capacitor-oidc @capacitor/app
 npx cap sync
 ```
 
-Complete the [iOS or Android setup](PLATFORM_SETUP.md) before running the app.
+Complete the [iOS or Android setup](PLATFORM_SETUP.md) before running a native
+build.
 
 ## 3. Create one manager
 
-Create and retain one manager for the application session. Recreating managers
-for individual API calls also recreates listeners and can produce competing
-renewal work.
+Create and retain one manager for the application session. The package detects
+the current platform and resolves settings in this order:
+
+```text
+web:     common -> web
+iOS:     common -> native -> ios
+Android: common -> native -> android
+```
+
+Every merge is shallow, including configured sign-in and sign-out arguments.
 
 ```ts
-import { CapacitorUserManager } from 'capacitor-oidc';
+import { CapacitorUserManager, WebStorageStateStore } from 'capacitor-oidc';
 
-export const auth = await CapacitorUserManager.create(
-  {
+export const auth = await CapacitorUserManager.create({
+  common: {
     authority: 'https://identity.example.com',
-    client_id: 'mobile-app',
-    redirect_uri: 'com.example.app:/callback',
-    post_logout_redirect_uri: 'com.example.app:/logout-callback',
+    client_id: 'public-app',
     scope: 'openid profile offline_access',
     automaticSilentRenew: true,
     loadUserInfo: true,
     revokeTokensOnSignout: true,
   },
-  {
-    prefersEphemeralWebBrowserSession: false,
-    storageNamespace: 'primary',
+  web: {
+    settings: {
+      redirect_uri: `${window.location.origin}/callback`,
+      post_logout_redirect_uri: `${window.location.origin}/logout-callback`,
+      stateStore: new WebStorageStateStore({ store: window.sessionStorage }),
+      userStore: new WebStorageStateStore({ store: window.localStorage }),
+    },
   },
-);
+  native: {
+    settings: {
+      redirect_uri: 'com.example.app:/callback',
+      post_logout_redirect_uri: 'com.example.app:/logout-callback',
+    },
+    options: {
+      prefersEphemeralWebBrowserSession: false,
+      storageNamespace: 'primary',
+    },
+  },
+  ios: {
+    settings: { redirect_uri: 'com.example.ios:/callback' },
+  },
+  android: {
+    settings: { redirect_uri: 'com.example.android:/callback' },
+  },
+});
 ```
 
-`prefersEphemeralWebBrowserSession` defaults to `false`, allowing the system
-browser to reuse an existing provider session. Set it to `true` when an isolated
-session is more important than shared SSO. Android fallback browsers may ignore
-the preference.
+The `web` and `native` sections are optional so a single-platform application
+does not need unused settings. Creation fails clearly if the running platform has
+no matching configuration.
 
-`create()` restores the stored user from secure native storage. When
-`automaticSilentRenew` is enabled, any necessary renewal then runs without
-blocking manager creation. Listen for `silentRenewError` to handle a failed
-startup renewal; temporary failures preserve the stored session.
+Browser-only settings such as custom stores, DPoP, silent iframe callbacks, and
+session monitoring belong in `web.settings`. Native stores and navigation are
+owned by the package and cannot be replaced. Public clients cannot configure a
+secret, disable PKCE, or change the response type on any platform.
 
-## 4. Sign in
+## 4. Handle web callbacks
+
+Call the matching callback method on the configured browser route:
 
 ```ts
-const user = await auth.signin();
-
-console.log(user.profile.sub);
+if (window.location.pathname === '/callback') {
+  await auth.signinCallback();
+} else if (window.location.pathname === '/logout-callback') {
+  await auth.signoutCallback();
+}
 ```
 
-The promise resolves after the system authentication session returns to the app,
-the authorization response is validated, and the code is exchanged.
+Native callbacks are completed by the system authentication session and do not
+need application routing.
 
-Listen for session changes through the normal `oidc-client-ts` events:
+## 5. Sign in
+
+```ts
+await auth.signin();
+```
+
+On web, `signin()` uses redirect navigation by default. Set `signinMode: 'popup'`
+in the web section to use a popup. On native platforms it uses the system
+authentication UI. The portable method returns no user because a browser redirect
+leaves the page; read the user after the callback or subscribe to events:
 
 ```ts
 auth.events.addUserLoaded((user) => {
@@ -85,14 +122,12 @@ auth.events.addSilentRenewError((error) => {
 });
 ```
 
-## 5. Get a usable access token
+## 6. Get a usable access token
 
 ```ts
 const user = await auth.getValidUser(30);
 
-if (!user) {
-  // No signed-in session is available.
-} else {
+if (user) {
   await fetch('https://api.example.com/profile', {
     headers: { Authorization: `Bearer ${user.access_token}` },
   });
@@ -100,33 +135,21 @@ if (!user) {
 ```
 
 `getValidUser(30)` returns the current user when its access token is valid for at
-least 30 more seconds. Otherwise it performs one refresh-token renewal. Concurrent
-renewal triggers share the same request.
+least 30 more seconds. Otherwise it performs one renewal. Concurrent renewal
+triggers share the same request. Native renewal requires a refresh token and
+never falls back to an iframe; web renewal retains the normal browser behavior.
 
-## 6. Sign out
+## 7. Sign out and dispose
 
 ```ts
 await auth.signout();
-```
-
-`signout()` opens the provider's end-session endpoint in the same native system
-authentication UI. Provider-specific parameters can be passed through
-`extraQueryParams`; see [Provider configuration](PROVIDERS.md).
-
-Use `removeUser()` when the application intentionally needs local-only logout.
-
-## 7. Dispose application listeners
-
-```ts
 await auth.dispose();
 ```
 
-Call `dispose()` when the manager will no longer be used. It stops silent renewal,
-removes the Capacitor app-state listener, and cancels a pending native session.
+Web sign-out uses redirects by default and supports `signoutMode: 'popup'`.
+Native sign-out uses the system authentication UI. Use `removeUser()` when the
+application intentionally needs local-only logout.
 
-## Browser builds
-
-`CapacitorUserManager` depends on native Capacitor plugins and is not a web
-replacement for `UserManager`. Applications that also run in a normal browser
-should instantiate `UserManager` from `oidc-client-ts` for the web branch and
-`CapacitorUserManager` for the native branch.
+Call `dispose()` when the manager will no longer be used. It stops renewal and,
+on native platforms, removes the app-state listener and cancels pending native
+navigation.

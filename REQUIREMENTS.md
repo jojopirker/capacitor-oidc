@@ -4,8 +4,10 @@
 
 - [ ] Production uses Authorization Code Flow with PKCE.
 - [ ] The package never accepts or stores a client secret.
-- [ ] Authorization and logout use external system authentication UI, never a
-      WebView.
+- [ ] Native authorization and logout use external system authentication UI,
+      never a WebView.
+- [ ] Web authorization and logout use standard browser redirect or popup
+      navigation.
 - [ ] State and nonce mismatch responses are rejected.
 - [ ] The selected OIDC engine validates required ID-token claims.
 - [ ] Tokens, authorization state, nonce, and PKCE verifier are encrypted at rest.
@@ -62,15 +64,25 @@
 ## API
 
 - [ ] The package is published as `capacitor-oidc`.
-- [ ] `CapacitorUserManager` exposes upstream settings, events, user data, UserInfo,
-      refresh, and revocation behavior where applicable to native clients.
+- [ ] Applications use one `CapacitorUserManager` across web, iOS, and Android.
+- [ ] Configuration resolves `common -> web` or
+      `common -> native -> ios|android` with shallow overrides.
+- [ ] `CapacitorUserManager` exposes upstream settings, events, user data,
+      UserInfo, refresh, and revocation behavior where applicable.
 - [ ] Recommended interactive methods are `signin()` and `signout()`.
+- [ ] Portable interactive methods return `Promise<void>` on every platform.
 - [ ] The adapter adds only `signin()`, `signout()`, `getValidUser()`, `cancel()`,
       and `dispose()`.
-- [ ] Unsupported browser-only methods fail clearly or are excluded by type.
+- [ ] Browser redirects, callbacks, popups, stores, and session features remain
+      available on web.
+- [ ] Unsupported browser-only methods fail clearly or are excluded by type on
+      native platforms.
+- [ ] Public types and browser storage helpers can be imported from this package
+      without a direct application dependency on `oidc-client-ts`.
 
 ## Verification matrix
 
+- [ ] Browser build, redirect callback, popup flow, renewal, and logout.
 - [ ] Packaged iOS simulator build.
 - [ ] Packaged physical iOS build.
 - [ ] Packaged Android emulator build.
@@ -88,9 +100,8 @@
 
 ## Explicitly deferred
 
-- DPoP.
+- Native DPoP.
 - Biometric-gated token access.
 - Autonomous widget refresh.
 - Exact background refresh scheduling.
-- Browser iframe session monitoring.
 - Compatibility with the legacy `generic-oauth2` API.

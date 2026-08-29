@@ -1,5 +1,4 @@
-import { CapacitorUserManager } from 'capacitor-oidc';
-import type { User } from 'oidc-client-ts';
+import { CapacitorUserManager, type User } from 'capacitor-oidc';
 
 import './style.css';
 
@@ -12,21 +11,37 @@ const refresh = document.querySelector<HTMLButtonElement>('#refresh')!;
 const signout = document.querySelector<HTMLButtonElement>('#signout')!;
 const authority = import.meta.env.VITE_OIDC_AUTHORITY ?? 'https://localhost:8443/realms/capacitor-oidc-e2e';
 
-const manager = await CapacitorUserManager.create(
-  {
+const manager = await CapacitorUserManager.create({
+  common: {
     authority,
     client_id: 'capacitor-oidc-example',
-    redirect_uri: 'capacitor-oidc-example:/callback',
-    post_logout_redirect_uri: 'capacitor-oidc-example:/logout-callback',
     scope: 'openid profile',
     automaticSilentRenew: false,
     loadUserInfo: true,
     revokeTokensOnSignout: true,
   },
-  {
-    storageNamespace: 'example',
+  web: {
+    settings: {
+      redirect_uri: `${window.location.origin}/callback`,
+      post_logout_redirect_uri: `${window.location.origin}/logout-callback`,
+    },
   },
-);
+  native: {
+    settings: {
+      redirect_uri: 'capacitor-oidc-example:/callback',
+      post_logout_redirect_uri: 'capacitor-oidc-example:/logout-callback',
+    },
+    options: { storageNamespace: 'example' },
+  },
+});
+
+if (window.location.pathname === '/callback') {
+  await manager.signinCallback();
+  window.history.replaceState({}, '', '/');
+} else if (window.location.pathname === '/logout-callback') {
+  await manager.signoutCallback();
+  window.history.replaceState({}, '', '/');
+}
 
 function render(user: User | null): void {
   const signedIn = Boolean(user);

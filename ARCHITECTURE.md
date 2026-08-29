@@ -8,12 +8,13 @@ that boundary require an ADR.
 
 ## Goals
 
-- Use Authorization Code Flow with PKCE for public native clients.
+- Expose one manager and configuration contract across web, iOS, and Android.
+- Use Authorization Code Flow with PKCE for public clients on every platform.
 - Present authorization and provider logout with platform authentication UI.
 - Reuse `oidc-client-ts` for discovery, requests, response processing, user
   management, refresh, UserInfo, revocation, logout request construction, and
   events.
-- Persist transaction and session state in platform-secure storage.
+- Use configurable browser storage on web and platform-secure storage on native.
 - Let a future iOS or Android widget read the stored session.
 - Keep the custom code and dependency surface small.
 
@@ -37,12 +38,15 @@ Application
     |
     v
 CapacitorUserManager extends oidc-client-ts UserManager
-    |                         |                         |
-    v                         v                         v
-CapacitorNavigator    CapacitorSecureStateStore   normal global fetch
-    |                         |
-    v                         v
-native auth UI             TokenVault
+    |                                      |
+    v                                      v
+web runtime                            native runtime
+oidc-client-ts navigators/stores       CapacitorNavigator + CapacitorSecureStateStore
+                                           |
+                                           v
+                                   native auth UI + TokenVault
+
+All protocol networking uses normal global fetch.
 ```
 
 ### `oidc-client-ts` owns
@@ -62,7 +66,8 @@ native auth UI             TokenVault
 - Adapting `StateStore` to native secure storage.
 - A native-readable, versioned session record for widgets.
 - Refresh serialization and application-resume renewal.
-- A small native-friendly API around interactive signin and signout.
+- Runtime configuration resolution and a small portable API around interactive
+  signin and signout.
 
 ### This package must not own
 
@@ -77,9 +82,15 @@ The main type extends `UserManager` so callers retain its user model, events, an
 non-browser-specific methods.
 
 ```ts
-const manager = await CapacitorUserManager.create(settings, nativeOptions);
+const manager = await CapacitorUserManager.create({
+  common: { authority, client_id, scope },
+  web: { settings: { redirect_uri: webRedirectUri } },
+  native: { settings: { redirect_uri: nativeRedirectUri } },
+  ios: { settings: iosOverrides },
+  android: { settings: androidOverrides },
+});
 
-const user = await manager.signin();
+await manager.signin();
 const validUser = await manager.getValidUser();
 await manager.revokeTokens();
 await manager.signout();
@@ -87,30 +98,35 @@ await manager.cancel();
 await manager.dispose();
 ```
 
-`signin()` and `signout()` are the recommended interactive methods. A native
-authentication session completes within the same promise, which matches
-`oidc-client-ts` popup navigation semantics rather than browser page-redirect
-semantics.
+`signin()` and `signout()` are the recommended interactive methods and return
+`Promise<void>` on every platform. Web redirect navigation leaves the page;
+native and popup interactions complete within the promise. User state comes from
+events or `getUser()` / `getValidUser()`.
 
-The settings type excludes insecure or browser-only choices:
+Configuration resolves once at creation:
 
-```ts
-type CapacitorUserManagerSettings = Omit<
-  UserManagerSettings,
-  | "client_secret"
-  | "client_authentication"
-  | "disablePKCE"
-  | "dpop"
-  | "response_type"
-  | "userStore"
-  | "stateStore"
-  | "monitorSession"
-  | "silent_redirect_uri"
->;
+```text
+web:     common -> web
+iOS:     common -> native -> ios
+Android: common -> native -> android
 ```
 
-The implementation forces code flow, PKCE, secure native stores, and no native
-iframe session monitoring.
+All merges are shallow. Every platform excludes client secrets, client
+authentication, disabling PKCE, and response-type changes. Web-specific settings
+such as custom stores, DPoP, iframe callbacks, and session monitoring are
+accepted only in the web section. Native forces secure stores and disables iframe
+session behavior.
+
+## Web runtime
+
+The web branch uses the normal `oidc-client-ts` redirect, popup, iframe, and
+storage implementations. `signinCallback()` and `signoutCallback()` remain the
+application's browser-route boundary. This package adds no browser protocol or
+navigation implementation; it selects and configures the upstream behavior.
+
+Web redirect is the default interactive mode. Popup mode is an explicit
+configuration choice. Configured default arguments and per-call arguments are
+merged shallowly, with the call taking precedence.
 
 ## Interactive navigation
 
@@ -172,10 +188,10 @@ This design does not promise exact refresh timing while the app is suspended.
 Both `userStore` and `stateStore` use `CapacitorSecureStateStore`, implementing:
 
 ```ts
-set(key, value)
-get(key)
-remove(key)
-getAllKeys()
+set(key, value);
+get(key);
+remove(key);
+getAllKeys();
 ```
 
 The store has separate transaction and session namespaces. Writes are atomic and

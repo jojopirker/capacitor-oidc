@@ -3,39 +3,56 @@ import { ErrorResponse, User, UserManager } from 'oidc-client-ts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CapacitorUserManager } from './capacitor-user-manager';
+import type {
+  CapacitorNativeUserManagerSettings,
+  CapacitorOidcNativeOptions,
+  CapacitorUserManagerCommonSettings,
+  CapacitorUserManagerConfiguration,
+} from './definitions';
 
 const storedSessionFixture = JSON.parse(
   readFileSync(new URL('../contracts/fixtures/stored-session-v1.json', import.meta.url), 'utf8'),
 );
 
-const { appState, setSessionSnapshot, storage, storageGet } = vi.hoisted(() => {
-  const storage = new Map<string, string>();
-  return {
-    appState: {
-      listener: undefined as ((state: { isActive: boolean }) => void) | undefined,
-      remove: vi.fn(),
-    },
-    storage,
-    setSessionSnapshot: vi.fn(),
-    storageGet: vi.fn(async ({ namespace, key }: { namespace: string; key: string }) => ({
-      value: storage.get(`${namespace}:${key}`) ?? null,
-    })),
-  };
-});
+const { addListener, appState, cancel, configure, runtime, setSessionSnapshot, storage, storageGet } = vi.hoisted(
+  () => {
+    const storage = new Map<string, string>();
+    return {
+      addListener: vi.fn(),
+      appState: {
+        listener: undefined as ((state: { isActive: boolean }) => void) | undefined,
+        remove: vi.fn(),
+      },
+      cancel: vi.fn(),
+      configure: vi.fn(),
+      runtime: { platform: 'ios' },
+      storage,
+      setSessionSnapshot: vi.fn(),
+      storageGet: vi.fn(async ({ namespace, key }: { namespace: string; key: string }) => ({
+        value: storage.get(`${namespace}:${key}`) ?? null,
+      })),
+    };
+  },
+);
 
 vi.mock('@capacitor/app', () => ({
   App: {
-    addListener: vi.fn(async (_eventName: string, listener: (state: { isActive: boolean }) => void) => {
-      appState.listener = listener;
-      return { remove: appState.remove };
-    }),
+    addListener: addListener.mockImplementation(
+      async (_eventName: string, listener: (state: { isActive: boolean }) => void) => {
+        appState.listener = listener;
+        return { remove: appState.remove };
+      },
+    ),
   },
 }));
 
 vi.mock('@capacitor/core', () => ({
+  Capacitor: {
+    getPlatform: () => runtime.platform,
+  },
   registerPlugin: () => ({
-    configure: vi.fn(),
-    cancel: vi.fn(),
+    configure,
+    cancel,
     storageSet: async ({ namespace, key, value }: { namespace: string; key: string; value: string }) => {
       storage.set(`${namespace}:${key}`, value);
     },
@@ -62,6 +79,22 @@ const settings = {
 const automaticSettings = { ...settings, automaticSilentRenew: true };
 const futureExpiration = Math.floor(Date.now() / 1000) + 3_600;
 
+type NativeTestSettings = CapacitorUserManagerCommonSettings & CapacitorNativeUserManagerSettings;
+
+function nativeConfiguration(
+  settings: NativeTestSettings,
+  options?: CapacitorOidcNativeOptions,
+): CapacitorUserManagerConfiguration {
+  const { post_logout_redirect_uri, redirect_uri, ...common } = settings;
+  return {
+    common,
+    native: {
+      settings: { post_logout_redirect_uri, redirect_uri },
+      options,
+    },
+  };
+}
+
 function storedUserKey(namespace = 'default'): string {
   return `${namespace}.session:user:${settings.authority}:${settings.client_id}`;
 }
@@ -72,9 +105,13 @@ function restoreOnCreate(user: User, namespace = 'default'): void {
 
 describe('CapacitorUserManager', () => {
   beforeEach(() => {
+    runtime.platform = 'ios';
     storage.clear();
     storageGet.mockClear();
     setSessionSnapshot.mockClear();
+    addListener.mockClear();
+    cancel.mockClear();
+    configure.mockClear();
     appState.listener = undefined;
     appState.remove.mockClear();
   });
@@ -102,7 +139,7 @@ describe('CapacitorUserManager', () => {
     });
     const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
 
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     await vi.waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
 
     const concurrentRefresh = manager.signinSilent();
@@ -129,7 +166,7 @@ describe('CapacitorUserManager', () => {
     });
     const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
 
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     await vi.waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
 
     const removal = manager.removeUser();
@@ -159,7 +196,7 @@ describe('CapacitorUserManager', () => {
     });
     const getValidUser = vi.spyOn(CapacitorUserManager.prototype, 'getValidUser').mockReturnValue(automaticCheck);
 
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     expect(getValidUser).toHaveBeenCalledTimes(1);
 
     let removed = false;
@@ -193,7 +230,7 @@ describe('CapacitorUserManager', () => {
     const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
     const signout = vi.spyOn(UserManager.prototype, 'signoutPopup').mockResolvedValue();
 
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     await vi.waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
 
     const signingOut = manager.signout();
@@ -232,7 +269,7 @@ describe('CapacitorUserManager', () => {
     const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
     const signin = vi.spyOn(UserManager.prototype, 'signinPopup').mockResolvedValue(signedInUser);
 
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     await vi.waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
 
     const signingIn = manager.signin();
@@ -240,7 +277,7 @@ describe('CapacitorUserManager', () => {
     expect(signin).not.toHaveBeenCalled();
 
     resolveRefresh(storedUser);
-    await expect(signingIn).resolves.toBe(signedInUser);
+    await expect(signingIn).resolves.toBeUndefined();
     expect(signin).toHaveBeenCalledTimes(1);
 
     refresh.mockRestore();
@@ -263,7 +300,7 @@ describe('CapacitorUserManager', () => {
     });
     const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
 
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     await vi.waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
 
     let disposed = false;
@@ -292,7 +329,7 @@ describe('CapacitorUserManager', () => {
     const getValidUser = vi.spyOn(CapacitorUserManager.prototype, 'getValidUser');
     const refresh = vi.spyOn(UserManager.prototype, 'signinSilent');
 
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     await vi.waitFor(() => expect(getValidUser).toHaveBeenCalledTimes(1));
     await getValidUser.mock.results[0].value;
 
@@ -304,7 +341,7 @@ describe('CapacitorUserManager', () => {
 
   it('does not check startup or resume renewal when automatic renewal is disabled', async () => {
     const getValidUser = vi.spyOn(CapacitorUserManager.prototype, 'getValidUser');
-    const manager = await CapacitorUserManager.create(settings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(settings));
 
     appState.listener?.({ isActive: true });
 
@@ -315,7 +352,7 @@ describe('CapacitorUserManager', () => {
 
   it('checks renewal when an automatically renewing manager resumes', async () => {
     const getValidUser = vi.spyOn(CapacitorUserManager.prototype, 'getValidUser');
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     await vi.waitFor(() => expect(getValidUser).toHaveBeenCalledTimes(1));
     await getValidUser.mock.results[0].value;
     await Promise.resolve();
@@ -346,7 +383,7 @@ describe('CapacitorUserManager', () => {
     });
     const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
 
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     const silentRenewError = vi.fn();
     const removeListener = manager.events.addSilentRenewError(silentRenewError);
     rejectRefresh(error);
@@ -374,7 +411,7 @@ describe('CapacitorUserManager', () => {
     });
     const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockReturnValue(upstreamRefresh);
 
-    const manager = await CapacitorUserManager.create(automaticSettings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     const silentRenewError = vi.fn();
     const removeListener = manager.events.addSilentRenewError(silentRenewError);
     rejectRefresh(error);
@@ -391,7 +428,7 @@ describe('CapacitorUserManager', () => {
     const error = new Error('secure storage unavailable');
     storageGet.mockRejectedValueOnce(error);
 
-    await expect(CapacitorUserManager.create(settings)).rejects.toBe(error);
+    await expect(CapacitorUserManager.create(nativeConfiguration(settings))).rejects.toBe(error);
   });
 
   it('removes an expired user without a refresh token', async () => {
@@ -402,7 +439,7 @@ describe('CapacitorUserManager', () => {
       expires_at: 1,
     });
     restoreOnCreate(user);
-    const manager = await CapacitorUserManager.create(settings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(settings));
 
     await expect(manager.getValidUser()).resolves.toBeNull();
 
@@ -412,7 +449,7 @@ describe('CapacitorUserManager', () => {
   });
 
   it('updates and clears the native widget snapshot through upstream storage paths', async () => {
-    const manager = await CapacitorUserManager.create(settings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(settings));
     const user = new User({
       access_token: 'access',
       refresh_token: 'refresh',
@@ -432,7 +469,7 @@ describe('CapacitorUserManager', () => {
   });
 
   it('shares one refresh request between concurrent callers', async () => {
-    const manager = await CapacitorUserManager.create(settings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(settings));
     const user = new User({
       access_token: 'access',
       refresh_token: 'refresh',
@@ -459,11 +496,13 @@ describe('CapacitorUserManager', () => {
   });
 
   it('stores the explicit metadata issuer in the widget snapshot', async () => {
-    const manager = await CapacitorUserManager.create({
-      ...settings,
-      authority: 'https://discovery.example',
-      metadata: { issuer: 'https://issuer.example' },
-    });
+    const manager = await CapacitorUserManager.create(
+      nativeConfiguration({
+        ...settings,
+        authority: 'https://discovery.example',
+        metadata: { issuer: 'https://issuer.example' },
+      }),
+    );
     const user = new User({
       access_token: 'access',
       token_type: 'Bearer',
@@ -478,7 +517,7 @@ describe('CapacitorUserManager', () => {
   });
 
   it('keeps renewal available when signout fails before local removal', async () => {
-    const manager = await CapacitorUserManager.create(settings);
+    const manager = await CapacitorUserManager.create(nativeConfiguration(settings));
     const signout = vi.spyOn(UserManager.prototype, 'signoutPopup').mockRejectedValue(new Error('revocation failed'));
     const stopRenewal = vi.spyOn(UserManager.prototype, 'stopSilentRenew');
 
@@ -491,12 +530,14 @@ describe('CapacitorUserManager', () => {
   });
 
   it('forwards provider-specific signout arguments unchanged', async () => {
-    const manager = await CapacitorUserManager.create({
-      authority: settings.authority,
-      client_id: settings.client_id,
-      redirect_uri: settings.redirect_uri,
-      automaticSilentRenew: false,
-    });
+    const manager = await CapacitorUserManager.create(
+      nativeConfiguration({
+        authority: settings.authority,
+        client_id: settings.client_id,
+        redirect_uri: settings.redirect_uri,
+        automaticSilentRenew: false,
+      }),
+    );
     const args = {
       extraQueryParams: {
         client_id: 'mobile',
@@ -511,6 +552,86 @@ describe('CapacitorUserManager', () => {
 
     expect(signout).toHaveBeenCalledWith(args);
     signout.mockRestore();
+    await manager.dispose();
+  });
+
+  it('uses redirect navigation and browser callbacks on web', async () => {
+    runtime.platform = 'web';
+    const signedInUser = new User({
+      access_token: 'web-access',
+      token_type: 'Bearer',
+      profile: { sub: 'web-subject' },
+      expires_at: futureExpiration,
+    });
+    const signinRedirect = vi.spyOn(UserManager.prototype, 'signinRedirect').mockResolvedValue();
+    const signinCallback = vi.spyOn(UserManager.prototype, 'signinCallback').mockResolvedValue(signedInUser);
+    const signoutRedirect = vi.spyOn(UserManager.prototype, 'signoutRedirect').mockResolvedValue();
+    const manager = await CapacitorUserManager.create({
+      common: {
+        authority: settings.authority,
+        client_id: 'web',
+        automaticSilentRenew: false,
+      },
+      web: {
+        settings: {
+          redirect_uri: 'https://app.example/callback',
+          post_logout_redirect_uri: 'https://app.example/logout',
+        },
+        signinArgs: { state: { returnTo: '/dashboard' } },
+        signoutArgs: { state: { source: 'menu' } },
+      },
+    });
+
+    await manager.signin({ prompt: 'login' });
+    await expect(manager.signinCallback('https://app.example/callback?code=code')).resolves.toBe(signedInUser);
+    await manager.signout({ id_token_hint: 'id-token' });
+
+    expect(signinRedirect).toHaveBeenCalledWith({ state: { returnTo: '/dashboard' }, prompt: 'login' });
+    expect(signinCallback).toHaveBeenCalledWith('https://app.example/callback?code=code');
+    expect(signoutRedirect).toHaveBeenCalledWith({ state: { source: 'menu' }, id_token_hint: 'id-token' });
+    expect(configure).not.toHaveBeenCalled();
+    expect(addListener).not.toHaveBeenCalled();
+
+    signinRedirect.mockRestore();
+    signinCallback.mockRestore();
+    signoutRedirect.mockRestore();
+    await manager.dispose();
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
+  it('supports popup interaction and browser storage without native side effects', async () => {
+    runtime.platform = 'web';
+    const user = new User({
+      access_token: 'web-access',
+      token_type: 'Bearer',
+      profile: { sub: 'web-subject' },
+      expires_at: futureExpiration,
+    });
+    const signinPopup = vi.spyOn(UserManager.prototype, 'signinPopup').mockResolvedValue(user);
+    const signoutPopup = vi.spyOn(UserManager.prototype, 'signoutPopup').mockResolvedValue();
+    const manager = await CapacitorUserManager.create({
+      common: {
+        authority: settings.authority,
+        client_id: 'web-popup',
+        automaticSilentRenew: false,
+      },
+      web: {
+        settings: { redirect_uri: 'https://app.example/popup-callback' },
+        signinMode: 'popup',
+        signoutMode: 'popup',
+      },
+    });
+
+    await manager.signin();
+    await manager.storeUser(user);
+    await manager.signout();
+
+    expect(signinPopup).toHaveBeenCalledOnce();
+    expect(signoutPopup).toHaveBeenCalledOnce();
+    expect(setSessionSnapshot).not.toHaveBeenCalled();
+
+    signinPopup.mockRestore();
+    signoutPopup.mockRestore();
     await manager.dispose();
   });
 });

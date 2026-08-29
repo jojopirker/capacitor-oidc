@@ -4,16 +4,17 @@
 [![CI](https://github.com/jojopirker/capacitor-oidc/actions/workflows/ci.yml/badge.svg)](https://github.com/jojopirker/capacitor-oidc/actions/workflows/ci.yml)
 [![license](https://img.shields.io/npm/l/capacitor-oidc)](LICENSE)
 
-`capacitor-oidc` is a simple OAuth 2.0 and OpenID Connect implementation for
-Capacitor 7 and 8 on native iOS and Android, powered by
+`capacitor-oidc` is one OAuth 2.0 and OpenID Connect client for Capacitor web,
+iOS, and Android applications, powered by
 [`oidc-client-ts`](https://github.com/authts/oidc-client-ts). It uses
-Authorization Code Flow with PKCE, native system authentication UI, and secure
-storage.
+Authorization Code Flow with PKCE, native system authentication UI and secure
+storage on mobile, and standard browser navigation and storage on web.
 
 ## Why `capacitor-oidc`?
 
 - Simple standards-based OAuth 2.0 and OIDC for Capacitor, without
   provider-specific SDKs.
+- One manager and configuration contract across web, iOS, and Android.
 - The familiar `oidc-client-ts` `UserManager` API, session objects, and events.
 - System authentication UI instead of an embedded WebView.
 - Secure native storage for OIDC transactions and sessions.
@@ -32,7 +33,7 @@ AndroidX Auth Tab with its Custom Tab fallback.
 | Android   | API 24 or newer; Auth Tab or Custom Tab      |
 | Flow      | Authorization Code Flow with PKCE            |
 | Providers | Compatible OAuth 2.0 and OpenID Connect APIs |
-| Web       | Use `oidc-client-ts` directly                |
+| Web       | Redirect or popup navigation                 |
 
 ## Demo
 
@@ -49,8 +50,8 @@ the provider.
 - Android API 24 or newer
 - Android compile SDK 36, Java 21, and a compatible Android Gradle Plugin
 - an OAuth public client using Authorization Code Flow with PKCE
-- Web Crypto in the packaged Capacitor WebView
-- CORS support for the app's Capacitor origin on OIDC HTTP endpoints
+- Web Crypto in every target runtime
+- CORS support for web application and Capacitor origins on OIDC HTTP endpoints
 
 Never ship a client secret in a Capacitor application.
 
@@ -66,35 +67,41 @@ npx cap sync
 ```ts
 import { CapacitorUserManager } from 'capacitor-oidc';
 
-const manager = await CapacitorUserManager.create(
-  {
+const manager = await CapacitorUserManager.create({
+  common: {
     authority: 'https://identity.example.com',
-    client_id: 'mobile-app',
-    redirect_uri: 'com.example.app:/callback',
-    post_logout_redirect_uri: 'com.example.app:/logout-callback',
+    client_id: 'public-app',
     scope: 'openid profile offline_access',
     automaticSilentRenew: true,
     revokeTokensOnSignout: true,
   },
-  {
-    storageNamespace: 'primary',
+  web: {
+    settings: {
+      redirect_uri: `${window.location.origin}/callback`,
+      post_logout_redirect_uri: `${window.location.origin}/logout-callback`,
+    },
   },
-);
+  native: {
+    settings: {
+      redirect_uri: 'com.example.app:/callback',
+      post_logout_redirect_uri: 'com.example.app:/logout-callback',
+    },
+    options: { storageNamespace: 'primary' },
+  },
+});
 
-const user = await manager.signin();
+await manager.signin();
 const validUser = await manager.getValidUser(30);
 
 await manager.signout();
 await manager.dispose();
 ```
 
-Register the redirect and post-logout redirect URIs exactly at your provider and
-in the native application. The provider client must be public and must allow
-Authorization Code Flow with PKCE.
-
-`CapacitorUserManager` is for native Capacitor runtimes. For a browser build, use
-the normal `UserManager` from `oidc-client-ts` and select the implementation with
-`Capacitor.isNativePlatform()` in the application.
+Register every configured redirect and post-logout redirect URI exactly at your
+provider, and register the native schemes in each native application. On the web
+callback route, call `signinCallback()`; on the web logout callback route, call
+`signoutCallback()`. The package detects the runtime and applies `common`, then
+`web` or `native`, then the matching `ios` or `android` override.
 
 A runnable Keycloak-backed iOS application and its UI test live in
 [`example`](example).
