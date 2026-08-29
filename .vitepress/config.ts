@@ -28,6 +28,7 @@ export default defineConfig({
     'example/README.md': 'example/index.md',
     'examples/vue/README.md': 'examples/vue/index.md',
     'examples/react/README.md': 'examples/react/index.md',
+    'examples/angular/README.md': 'examples/angular/index.md',
   },
   markdown: {
     theme: {
@@ -62,6 +63,7 @@ export default defineConfig({
         items: [
           { text: 'Vue', link: '/docs/frameworks/VUE' },
           { text: 'React', link: '/docs/frameworks/REACT' },
+          { text: 'Angular', link: '/docs/frameworks/ANGULAR' },
           { text: 'Sessions and widgets', link: '/docs/SESSIONS_AND_WIDGETS' },
           { text: 'Security', link: '/SECURITY' },
         ],

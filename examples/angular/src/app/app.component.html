@@ -1,0 +1,21 @@
+<main>
+  <section class="card" aria-labelledby="title">
+    <p class="eyebrow">Angular + Capacitor</p>
+    <h1 id="title">OpenID Connect, one manager</h1>
+    <p class="summary">The same session API runs in the browser and in the native Capacitor shell.</p>
+
+    <div class="session" aria-live="polite">
+      <span class="status-dot" [class.active]="oidc.user()" aria-hidden="true"></span>
+      <div>
+        <strong>{{ oidc.user() ? `Signed in as ${oidc.displayName()}` : 'Signed out' }}</strong>
+        <p>{{ oidc.message() }}</p>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button [disabled]="oidc.busy() || !oidc.ready() || !!oidc.user()" (click)="oidc.signin()">Sign in</button>
+      <button class="secondary" [disabled]="oidc.busy() || !oidc.user()" (click)="oidc.renew()">Renew</button>
+      <button class="secondary" [disabled]="oidc.busy() || !oidc.user()" (click)="oidc.signout()">Sign out</button>
+    </div>
+  </section>
+</main>
