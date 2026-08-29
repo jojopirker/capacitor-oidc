@@ -4,11 +4,9 @@ on:
   pull_request:
     paths:
       - '.vitepress/**'
-      - 'docs/**'
-      - 'ARCHITECTURE.md'
-      - 'README.md'
-      - 'REQUIREMENTS.md'
-      - 'SECURITY.md'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'public/**'
       - 'package-lock.json'
       - 'package.json'
       - '.github/workflows/docs.yml'
@@ -17,11 +15,9 @@ on:
       - main
     paths:
       - '.vitepress/**'
-      - 'docs/**'
-      - 'ARCHITECTURE.md'
-      - 'README.md'
-      - 'REQUIREMENTS.md'
-      - 'SECURITY.md'
+      - '**/*.md'
+      - 'LICENSE'
+      - 'public/**'
       - 'package-lock.json'
       - 'package.json'
       - '.github/workflows/docs.yml'
