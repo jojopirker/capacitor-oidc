@@ -655,13 +655,62 @@ describe('CapacitorUserManager', () => {
     });
     const sessionMonitor = (
       manager as unknown as {
-        _sessionMonitor: { _stop(): void };
+        sessionMonitor: { stop(): void };
       }
-    )._sessionMonitor;
-    const stop = vi.spyOn(sessionMonitor, '_stop');
+    ).sessionMonitor;
+    const stop = vi.spyOn(sessionMonitor, 'stop');
 
     await manager.dispose();
 
     expect(stop).toHaveBeenCalledOnce();
+  });
+
+  it('does not restart web session monitoring when initialization finishes after disposal', async () => {
+    runtime.platform = 'web';
+    const reads: ((value: string | null) => void)[] = [];
+    const userStore = {
+      set: async () => undefined,
+      get: vi.fn(
+        () =>
+          new Promise<string | null>((resolve) => {
+            reads.push(resolve);
+          }),
+      ),
+      remove: async () => null,
+      getAllKeys: async () => [],
+    };
+    const creation = CapacitorUserManager.create({
+      common: {
+        authority: settings.authority,
+        client_id: 'web-delayed-monitor',
+        automaticSilentRenew: false,
+      },
+      web: {
+        settings: {
+          redirect_uri: 'https://app.example/callback',
+          monitorSession: true,
+          userStore,
+        },
+      },
+    });
+    await vi.waitFor(() => expect(reads).toHaveLength(2));
+    reads[1](null);
+    const manager = await creation;
+    const getCheckSessionIframe = vi
+      .spyOn(manager.metadataService, 'getCheckSessionIframe')
+      .mockResolvedValue('https://issuer.example/check-session');
+
+    await manager.dispose();
+    const user = new User({
+      access_token: 'web-access',
+      token_type: 'Bearer',
+      profile: { sub: 'web-subject' },
+      session_state: 'session-state',
+      expires_at: futureExpiration,
+    });
+    reads[0](user.toStorageString());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(getCheckSessionIframe).not.toHaveBeenCalled();
   });
 });

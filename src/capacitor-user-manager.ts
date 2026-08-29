@@ -26,6 +26,16 @@ import type {
 import { CapacitorOidcError, unsupported } from './errors.js';
 import { NativeOidc } from './native.js';
 
+interface SessionMonitorLifecycle {
+  start(user: User): Promise<void>;
+  stop(): void;
+}
+
+interface InternalSessionMonitor {
+  _start(user: User): Promise<void>;
+  _stop(): void;
+}
+
 export class CapacitorUserManager extends UserManager {
   private automaticRenewalPromise?: Promise<User | null>;
   private refreshPromise?: Promise<User | null>;
@@ -36,6 +46,7 @@ export class CapacitorUserManager extends UserManager {
   private readonly signoutMode: 'popup' | 'redirect';
   private readonly defaultSigninArgs: CapacitorSigninArgs;
   private readonly defaultSignoutArgs: CapacitorSignoutArgs;
+  private readonly sessionMonitor?: SessionMonitorLifecycle;
   private disposed = false;
 
   private constructor(configuration: ResolvedUserManagerConfiguration) {
@@ -68,6 +79,7 @@ export class CapacitorUserManager extends UserManager {
     this.signoutMode = configuration.signoutMode;
     this.defaultSigninArgs = configuration.signinArgs;
     this.defaultSignoutArgs = configuration.signoutArgs;
+    this.sessionMonitor = this.captureSessionMonitor();
   }
 
   static async create(configuration: CapacitorUserManagerConfiguration): Promise<CapacitorUserManager> {
@@ -177,7 +189,8 @@ export class CapacitorUserManager extends UserManager {
   override async querySessionStatus(args: QuerySessionStatusArgs = {}): Promise<SessionStatus | null> {
     if (this.isNative) unsupported('Browser session monitoring');
     if (this.disposed) return null;
-    return super.querySessionStatus(args);
+    const session = await super.querySessionStatus(args);
+    return this.disposed ? null : session;
   }
 
   override async signinResourceOwnerCredentials(_args: SigninResourceOwnerCredentialsArgs): Promise<User> {
@@ -214,15 +227,32 @@ export class CapacitorUserManager extends UserManager {
   async dispose(): Promise<void> {
     this.disposed = true;
     this.stopSilentRenew();
-    this.stopSessionMonitor();
+    if (this.sessionMonitor) {
+      this.events.removeUserLoaded(this.sessionMonitor.start);
+      this.events.removeUserUnloaded(this.sessionMonitor.stop);
+      this.sessionMonitor.stop();
+    }
     await this.appStateListener?.remove();
     await this.waitForRenewal();
     await this.cancel();
   }
 
-  private stopSessionMonitor(): void {
-    // oidc-client-ts does not expose public session-monitor teardown.
-    (this._sessionMonitor as unknown as { _stop(): void } | null)?._stop();
+  private captureSessionMonitor(): SessionMonitorLifecycle | undefined {
+    // oidc-client-ts does not expose public session-monitor lifecycle hooks.
+    const monitor = this._sessionMonitor as unknown as InternalSessionMonitor | null;
+    if (!monitor) return undefined;
+
+    const originalStart = monitor._start;
+    const stop = monitor._stop;
+    const start = async (user: User) => {
+      if (this.disposed) return;
+      await originalStart(user);
+      if (this.disposed) stop();
+    };
+    this.events.removeUserLoaded(originalStart);
+    this.events.addUserLoaded(start);
+    monitor._start = start;
+    return { start, stop };
   }
 
   private checkForAutomaticRenewal(): void {
