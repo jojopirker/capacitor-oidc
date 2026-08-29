@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.vitepress/**'
+      - 'docs/**'
       - '**/*.md'
       - 'LICENSE'
       - 'public/**'
@@ -15,6 +16,7 @@ on:
       - main
     paths:
       - '.vitepress/**'
+      - 'docs/**'
       - '**/*.md'
       - 'LICENSE'
       - 'public/**'
