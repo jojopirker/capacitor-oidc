@@ -118,6 +118,9 @@ npm --prefix examples/angular install
 npm --prefix examples/angular run dev
 ```
 
+Sign in with the disposable `demo` / `demo` account. Stop the local realm with
+`npm run e2e:keycloak:down` when finished.
+
 This local realm workflow is for the browser example. Android resolves
 `localhost` inside the device or emulator, and native platforms should not use
 the example's cleartext HTTP authority. Before building for iOS or Android,
