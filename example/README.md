@@ -1,9 +1,10 @@
 # Example application
 
 This Capacitor 8 application exercises the packaged plugin against the local
-Keycloak realm in [`test/e2e/keycloak`](../test/e2e/keycloak). Its iOS and
-Android UI tests sign in with Authorization Code Flow and PKCE, force a
-refresh-token renewal, and sign out at the provider.
+Keycloak realm in
+[`test/e2e/keycloak`](https://github.com/jojopirker/capacitor-oidc/tree/main/test/e2e/keycloak).
+Its iOS and Android UI tests sign in with Authorization Code Flow and PKCE,
+force a refresh-token renewal, and sign out at the provider.
 
 The same source also runs as a browser application through the universal
 manager. With the local Keycloak realm running, start Vite and open the printed

@@ -20,4 +20,4 @@ setup for each native platform and your identity provider.
 - [Requirements and acceptance criteria](../REQUIREMENTS.md)
 - [Testing](TESTING.md)
 - [Publishing](PUBLISHING.md)
-- [Architecture decisions](adr)
+- [Architecture decisions](adr/)

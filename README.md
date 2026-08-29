@@ -104,7 +104,7 @@ callback route, call `signinCallback()`; on the web logout callback route, call
 `web` or `native`, then the matching `ios` or `android` override.
 
 A runnable Keycloak-backed iOS application and its UI test live in
-[`example`](example).
+[`example`](example/).
 
 ## Documentation
 
@@ -127,7 +127,7 @@ npm run verify:android
 
 Architecture decisions and contributor constraints are documented in
 [ARCHITECTURE.md](ARCHITECTURE.md), [REQUIREMENTS.md](REQUIREMENTS.md), and
-[docs/adr](docs/adr).
+[docs/adr](docs/adr/).
 
 ## License
 

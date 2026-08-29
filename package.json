@@ -49,6 +49,9 @@
     "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
     "check:package": "node -e \"import('./dist/esm/index.js')\"",
     "clean": "rimraf dist",
+    "docs:build": "vitepress build . && cp LICENSE .vitepress/dist/LICENSE",
+    "docs:dev": "vitepress dev .",
+    "docs:preview": "vitepress preview .",
     "e2e:keycloak:down": "docker compose -f test/e2e/keycloak/compose.yml down",
     "e2e:keycloak:up": "test/e2e/keycloak/create-certificate.sh test/e2e/keycloak/.certificates && docker compose -f test/e2e/keycloak/compose.yml up -d",
     "example:build": "npm --prefix example run build",
@@ -79,6 +82,8 @@
     "rimraf": "6.1.0",
     "rollup": "4.62.5",
     "typescript": "5.9.3",
+    "vite": "7.3.6",
+    "vitepress": "2.0.0-alpha.19",
     "vitest": "3.2.7"
   },
   "prettier": "@ionic/prettier-config",
