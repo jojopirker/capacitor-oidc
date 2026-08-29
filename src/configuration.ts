@@ -32,14 +32,26 @@ function resolveWebConfiguration(configuration: CapacitorUserManagerConfiguratio
   const web = configuration.web;
   if (!web) unsupportedConfiguration('web');
 
-  const settings = { ...configuration.common, ...web.settings };
+  const signinMode = web.signinMode ?? 'redirect';
+  const signoutMode = web.signoutMode ?? 'redirect';
+  const settings: UserManagerSettings = { ...configuration.common, ...web.settings };
   assertPublicClient(settings);
+  if (signinMode === 'popup') settings.popup_redirect_uri ??= settings.redirect_uri;
+  if (signoutMode === 'popup') {
+    settings.popup_post_logout_redirect_uri ??= settings.post_logout_redirect_uri;
+    if (!settings.popup_post_logout_redirect_uri) {
+      throw new CapacitorOidcError(
+        'UNSUPPORTED_RUNTIME',
+        'Web popup signout requires post_logout_redirect_uri or popup_post_logout_redirect_uri',
+      );
+    }
+  }
 
   return {
     platform: 'web',
     settings: { ...settings, response_type: 'code', disablePKCE: false },
-    signinMode: web.signinMode ?? 'redirect',
-    signoutMode: web.signoutMode ?? 'redirect',
+    signinMode,
+    signoutMode,
     signinArgs: web.signinArgs ?? {},
     signoutArgs: web.signoutArgs ?? {},
   };

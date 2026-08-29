@@ -90,6 +90,38 @@ describe('resolveConfiguration', () => {
     expect(resolved.nativeOptions).toBeUndefined();
   });
 
+  it('fills upstream popup callback settings from the matching redirect URIs', () => {
+    const resolved = resolveConfiguration(
+      {
+        common,
+        web: {
+          settings: {
+            redirect_uri: 'https://app.example/callback',
+            post_logout_redirect_uri: 'https://app.example/logout-callback',
+          },
+          signinMode: 'popup',
+          signoutMode: 'popup',
+        },
+      },
+      'web',
+    );
+
+    expect(resolved.settings.popup_redirect_uri).toBe('https://app.example/callback');
+    expect(resolved.settings.popup_post_logout_redirect_uri).toBe('https://app.example/logout-callback');
+  });
+
+  it('requires a callback URI for web popup signout', () => {
+    const configuration = {
+      common,
+      web: {
+        settings: { redirect_uri: 'https://app.example/callback' },
+        signoutMode: 'popup',
+      },
+    } as CapacitorUserManagerConfiguration;
+
+    expect(() => resolveConfiguration(configuration, 'web')).toThrow('Web popup signout requires');
+  });
+
   it('requires configuration for the current runtime', () => {
     expect(() => resolveConfiguration({ common, native: undefined }, 'web')).toThrow(
       'No web configuration was provided',

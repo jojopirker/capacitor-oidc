@@ -67,13 +67,24 @@ export type CapacitorNativeUserManagerSettings = Partial<Omit<NativeUserManagerS
 export type CapacitorSigninArgs = SigninPopupArgs & SigninRedirectArgs;
 export type CapacitorSignoutArgs = SignoutPopupArgs & SignoutRedirectArgs;
 
-export interface CapacitorWebUserManagerConfiguration {
+interface CapacitorWebUserManagerConfigurationBase {
   settings: CapacitorWebUserManagerSettings;
   signinMode?: 'popup' | 'redirect';
-  signoutMode?: 'popup' | 'redirect';
   signinArgs?: CapacitorSigninArgs;
   signoutArgs?: CapacitorSignoutArgs;
 }
+
+type PopupSignoutSettings = CapacitorWebUserManagerSettings &
+  ({ popup_post_logout_redirect_uri: string } | { post_logout_redirect_uri: string });
+
+export type CapacitorWebUserManagerConfiguration =
+  | (CapacitorWebUserManagerConfigurationBase & {
+      signoutMode: 'popup';
+      settings: PopupSignoutSettings;
+    })
+  | (CapacitorWebUserManagerConfigurationBase & {
+      signoutMode?: 'redirect';
+    });
 
 export interface CapacitorNativeUserManagerConfiguration {
   settings: CapacitorNativeUserManagerSettings;

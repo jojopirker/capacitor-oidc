@@ -49,6 +49,10 @@ interface CapacitorWebUserManagerConfiguration {
 }
 ```
 
+Popup sign-in defaults its popup callback to `settings.redirect_uri`. Popup
+sign-out requires either `settings.post_logout_redirect_uri` or an explicit
+`settings.popup_post_logout_redirect_uri`, which becomes the popup callback.
+
 The native section and platform overrides accept native-compatible settings,
 default arguments, and these options:
 

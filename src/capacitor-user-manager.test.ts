@@ -616,7 +616,10 @@ describe('CapacitorUserManager', () => {
         automaticSilentRenew: false,
       },
       web: {
-        settings: { redirect_uri: 'https://app.example/popup-callback' },
+        settings: {
+          redirect_uri: 'https://app.example/popup-callback',
+          post_logout_redirect_uri: 'https://app.example/popup-logout-callback',
+        },
         signinMode: 'popup',
         signoutMode: 'popup',
       },
