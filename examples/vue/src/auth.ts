@@ -1,7 +1,6 @@
 import { CapacitorUserManager } from 'capacitor-oidc';
 
-const authority =
-  import.meta.env.VITE_OIDC_AUTHORITY ?? 'http://localhost:8080/realms/capacitor-oidc-e2e';
+const authority = import.meta.env.VITE_OIDC_AUTHORITY ?? 'http://localhost:8080/realms/capacitor-oidc-e2e';
 const clientId = import.meta.env.VITE_OIDC_CLIENT_ID ?? 'capacitor-oidc-example';
 
 const manager = CapacitorUserManager.create({
@@ -9,7 +8,7 @@ const manager = CapacitorUserManager.create({
     authority,
     client_id: clientId,
     scope: 'openid profile offline_access',
-    automaticSilentRenew: true,
+    automaticSilentRenew: false,
     loadUserInfo: true,
     revokeTokensOnSignout: true,
   },
@@ -21,8 +20,8 @@ const manager = CapacitorUserManager.create({
   },
   native: {
     settings: {
-      redirect_uri: 'com.example.oidc.vue:/callback',
-      post_logout_redirect_uri: 'com.example.oidc.vue:/logout-callback',
+      redirect_uri: 'capacitor-oidc-example:/callback',
+      post_logout_redirect_uri: 'capacitor-oidc-example:/logout-callback',
     },
     options: { storageNamespace: 'vue-example' },
   },

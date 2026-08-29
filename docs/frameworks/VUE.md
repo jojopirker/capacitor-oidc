@@ -26,7 +26,7 @@ const manager = CapacitorUserManager.create({
     authority: import.meta.env.VITE_OIDC_AUTHORITY,
     client_id: import.meta.env.VITE_OIDC_CLIENT_ID,
     scope: 'openid profile offline_access',
-    automaticSilentRenew: true,
+    automaticSilentRenew: false,
   },
   web: {
     settings: {
@@ -36,8 +36,8 @@ const manager = CapacitorUserManager.create({
   },
   native: {
     settings: {
-      redirect_uri: 'com.example.oidc.vue:/callback',
-      post_logout_redirect_uri: 'com.example.oidc.vue:/logout-callback',
+      redirect_uri: 'capacitor-oidc-example:/callback',
+      post_logout_redirect_uri: 'capacitor-oidc-example:/logout-callback',
     },
     options: { storageNamespace: 'vue-example' },
   },
@@ -48,8 +48,11 @@ export function getUserManager() {
 }
 ```
 
-The runnable example supplies local Keycloak defaults as a convenience. Use
-environment variables for your provider in an application.
+The runnable example supplies local Keycloak defaults as a convenience and
+keeps automatic renewal off so its 30-second test tokens can be renewed with
+the example's button. For a normal provider, enable automatic renewal and keep
+its expiry-notification threshold below the provider's access-token lifetime.
+Use environment variables for your provider in an application.
 
 ## Restore state and handle callbacks
 
@@ -97,11 +100,15 @@ route component unmounts.
 Start the repository's local Keycloak realm, then start the Vue app:
 
 ```sh
+npm ci
+npm run build
 npm run e2e:keycloak:up
 npm --prefix examples/vue install
 npm --prefix examples/vue run dev
 ```
 
 The bundled realm accepts the web callbacks on `http://localhost:5173` and the
-native `com.example.oidc.vue` callback scheme must be added before running an
-iOS or Android build. See [iOS and Android setup](../PLATFORM_SETUP.md).
+native `capacitor-oidc-example` callback scheme. Add that scheme before running
+an iOS or Android build. Replace it with an application-specific scheme and
+register the replacement at your provider for a real application. See
+[iOS and Android setup](../PLATFORM_SETUP.md).
