@@ -43,7 +43,7 @@
   "bugs": {
     "url": "https://github.com/jojopirker/capacitor-oidc/issues"
   },
-  "homepage": "https://github.com/jojopirker/capacitor-oidc#readme",
+  "homepage": "https://jojopirker.github.io/capacitor-oidc/",
   "type": "module",
   "scripts": {
     "build": "npm run clean && tsc && rollup -c rollup.config.mjs",
