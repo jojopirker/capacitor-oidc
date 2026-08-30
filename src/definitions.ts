@@ -1,10 +1,4 @@
-import type {
-  SigninPopupArgs,
-  SigninRedirectArgs,
-  SignoutPopupArgs,
-  SignoutRedirectArgs,
-  UserManagerSettings,
-} from 'oidc-client-ts';
+import type { ExtraSigninRequestArgs, ExtraSignoutRequestArgs, UserManagerSettings } from 'oidc-client-ts';
 
 export type CapacitorOidcErrorCode =
   | 'AUTH_SESSION_IN_PROGRESS'
@@ -75,8 +69,8 @@ export type CapacitorNativeUserManagerSettings = Partial<Omit<NativeUserManagerS
   redirect_uri: string;
 };
 
-export type CapacitorSigninArgs = SigninPopupArgs & SigninRedirectArgs;
-export type CapacitorSignoutArgs = SignoutPopupArgs & SignoutRedirectArgs;
+export type CapacitorSigninArgs = ExtraSigninRequestArgs;
+export type CapacitorSignoutArgs = ExtraSignoutRequestArgs;
 
 interface CapacitorWebUserManagerConfigurationBase {
   settings: CapacitorWebUserManagerSettings;
