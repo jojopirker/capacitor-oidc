@@ -18,7 +18,8 @@ native navigation, storage, renewal, and lifecycle behavior.
 `signin()` and `signout()` return `Promise<void>` consistently. Read user state
 through `getUser()`, `getValidUser()`, or `events`. Configuration-level arguments
 are shallowly merged with call-level arguments, with call values taking
-precedence.
+precedence. Their portable argument types include OIDC request parameters and
+application state, but not popup- or redirect-specific navigation controls.
 
 ## Configuration
 
