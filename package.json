@@ -1,6 +1,6 @@
 {
   "name": "capacitor-oidc",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "OAuth 2.0 and OpenID Connect authentication for Capacitor web, iOS, and Android, powered by oidc-client-ts.",
   "keywords": [
     "capacitor",
