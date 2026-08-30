@@ -1,9 +1,11 @@
 import {
   UserManager,
   type INavigator,
+  type SigninPopupArgs,
   type SigninRedirectArgs,
   type SigninResourceOwnerCredentialsArgs,
   type SigninSilentArgs,
+  type SignoutPopupArgs,
   type SignoutRedirectArgs,
   type User,
 } from 'oidc-client-ts';
@@ -56,12 +58,12 @@ export abstract class BaseCapacitorUserManager extends UserManager {
     return this.signinSilent();
   }
 
-  override async signinPopup(args: CapacitorSigninArgs = {}): Promise<User> {
+  override async signinPopup(args: SigninPopupArgs = {}): Promise<User> {
     await this.waitForRenewal();
     return super.signinPopup(args);
   }
 
-  override async signoutPopup(args: CapacitorSignoutArgs = {}): Promise<void> {
+  override async signoutPopup(args: SignoutPopupArgs = {}): Promise<void> {
     await this.waitForRenewal();
     await super.signoutPopup(args);
   }

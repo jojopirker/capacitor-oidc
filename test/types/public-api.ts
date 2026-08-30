@@ -1,4 +1,9 @@
-import { type CapacitorSigninArgs, type CapacitorSignoutArgs } from '../../src/index.js';
+import type { CapacitorSigninArgs, CapacitorSignoutArgs, CapacitorUserManager } from '../../src/index.js';
+
+declare const manager: CapacitorUserManager;
+
+void manager.signinPopup({ popupWindowTarget: '_blank', popupWindowFeatures: { width: 480 } });
+void manager.signoutPopup({ popupWindowTarget: '_blank', popupSignal: new AbortController().signal });
 
 const signinArgs = { prompt: 'login', state: { returnTo: '/' } } satisfies CapacitorSigninArgs;
 const signoutArgs = { id_token_hint: 'id-token', state: { source: 'menu' } } satisfies CapacitorSignoutArgs;
