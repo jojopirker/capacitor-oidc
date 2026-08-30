@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { resolveConfiguration, resolveLegacyNativeConfiguration } from './configuration';
 import type { CapacitorUserManagerConfiguration, CapacitorUserManagerSettings } from './definitions';
+import { WEB_ONLY_SETTINGS } from './user-manager-settings-policy';
 
 const common = {
   authority: 'https://issuer.example',
@@ -131,23 +132,27 @@ describe('resolveConfiguration', () => {
     );
   });
 
-  it('rejects unsafe public-client and native-only settings at runtime', () => {
+  it('rejects unsafe public-client settings at runtime', () => {
     const secretConfiguration = {
       common: { ...common, client_secret: 'secret' },
       web: { settings: { redirect_uri: 'https://app.example/callback' } },
     } as CapacitorUserManagerConfiguration;
-    const customNativeStore = {
+
+    expect(() => resolveConfiguration(secretConfiguration, 'web')).toThrow('client_secret');
+  });
+
+  it.each(WEB_ONLY_SETTINGS)('rejects the web-only %s setting on native platforms', (setting) => {
+    const configuration = {
       common,
       native: {
         settings: {
           redirect_uri: 'com.example.app:/callback',
-          userStore: {},
+          [setting]: true,
         },
       },
     } as CapacitorUserManagerConfiguration;
 
-    expect(() => resolveConfiguration(secretConfiguration, 'web')).toThrow('client_secret');
-    expect(() => resolveConfiguration(customNativeStore, 'android')).toThrow('userStore');
+    expect(() => resolveConfiguration(configuration, 'android')).toThrow(setting);
   });
 
   it('resolves the legacy native settings and options', () => {

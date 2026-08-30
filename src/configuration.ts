@@ -8,6 +8,7 @@ import type {
   CapacitorUserManagerSettings,
 } from './definitions.js';
 import { CapacitorOidcError } from './errors.js';
+import { WEB_ONLY_SETTINGS } from './user-manager-settings-policy.js';
 
 export type RuntimePlatform = 'android' | 'ios' | 'web';
 
@@ -122,9 +123,7 @@ function assertPublicClient(settings: object): void {
 }
 
 function assertNativeSettings(settings: object): void {
-  const unsupported = ['dpop', 'monitorSession', 'silent_redirect_uri', 'stateStore', 'userStore'].find(
-    (key) => key in settings,
-  );
+  const unsupported = WEB_ONLY_SETTINGS.find((key) => key in settings);
   if (unsupported) {
     throw new CapacitorOidcError('UNSUPPORTED_RUNTIME', `Native configuration does not support ${unsupported}`);
   }
