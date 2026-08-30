@@ -105,6 +105,7 @@ button {
   background: #f2ede3;
   font: inherit;
   font-weight: 650;
+  user-select: none;
 }
 
 button.secondary {
