@@ -4,8 +4,10 @@ import {
   ErrorResponse,
   type QuerySessionStatusArgs,
   type SessionStatus,
+  type SigninPopupArgs,
   type SigninRedirectArgs,
   type SigninSilentArgs,
+  type SignoutPopupArgs,
   type SignoutRedirectArgs,
   type SignoutResponse,
   type SignoutSilentArgs,
@@ -21,6 +23,8 @@ import { unsupported } from './errors.js';
 import { NativeOidc } from './native.js';
 
 export class NativeCapacitorUserManager extends CapacitorUserManager {
+  private automaticRenewalPromise?: Promise<User | null>;
+  private refreshPromise?: Promise<User | null>;
   private appStateListener?: PluginListenerHandle;
   private readonly storageNamespace: string;
 
@@ -58,6 +62,31 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
       if (isActive) this.checkForAutomaticRenewal();
     });
     this.checkForAutomaticRenewal();
+  }
+
+  override async signinPopup(args: SigninPopupArgs = {}): Promise<User> {
+    await this.waitForRenewal();
+    return super.signinPopup(args);
+  }
+
+  override async signoutPopup(args: SignoutPopupArgs = {}): Promise<void> {
+    await this.waitForRenewal();
+    await super.signoutPopup(args);
+  }
+
+  override signinSilent(args: SigninSilentArgs = {}): Promise<User | null> {
+    if (!this.refreshPromise) {
+      const refresh = this.performSilentSignin(args);
+      this.refreshPromise = refresh.finally(() => {
+        this.refreshPromise = undefined;
+      });
+    }
+    return this.refreshPromise;
+  }
+
+  override async removeUser(): Promise<void> {
+    await this.waitForRenewal();
+    await this.removeUserWithoutWaiting();
   }
 
   override async signinRedirect(_args: SigninRedirectArgs = {}): Promise<void> {
@@ -122,19 +151,42 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
 
   protected override async disposePlatform(): Promise<void> {
     await this.appStateListener?.remove();
+    await this.waitForRenewal();
   }
 
-  protected override async performSilentSignin(args: SigninSilentArgs): Promise<User | null> {
+  private async performSilentSignin(args: SigninSilentArgs): Promise<User | null> {
     const user = await this.getUser();
     if (!user?.refresh_token) {
       if (user?.expired) await this.removeUserWithoutWaiting();
       return null;
     }
 
-    return super.performSilentSignin({ ...args, forceIframeAuth: false }).catch(async (error: unknown) => {
+    return super.signinSilent({ ...args, forceIframeAuth: false }).catch(async (error: unknown) => {
       if (error instanceof ErrorResponse && error.error === 'invalid_grant') await this.removeUserWithoutWaiting();
       throw error;
     });
+  }
+
+  private removeUserWithoutWaiting(): Promise<void> {
+    return super.removeUser();
+  }
+
+  private checkForAutomaticRenewal(): void {
+    if (!this.settings.automaticSilentRenew || this.automaticRenewalPromise) return;
+    const renewal = this.getValidUser();
+    this.automaticRenewalPromise = renewal;
+    void renewal
+      .catch((error: unknown) =>
+        this.events._raiseSilentRenewError(error instanceof Error ? error : new Error('Silent renewal failed')),
+      )
+      .finally(() => {
+        if (this.automaticRenewalPromise === renewal) this.automaticRenewalPromise = undefined;
+      });
+  }
+
+  private async waitForRenewal(): Promise<void> {
+    await this.automaticRenewalPromise?.catch(() => undefined);
+    await this.refreshPromise?.catch(() => undefined);
   }
 }
 

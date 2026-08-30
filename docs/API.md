@@ -11,7 +11,7 @@ native navigation, storage, renewal, and lifecycle behavior.
 | `CapacitorUserManager.create(configuration)` | Resolves the current platform and restores its stored user.   |
 | `signin(args?)`                              | Starts the configured redirect, popup, or native interaction. |
 | `signout(args?)`                             | Starts the configured provider logout interaction.            |
-| `getValidUser(minimumValiditySeconds?)`      | Returns the user or performs one serialized renewal.          |
+| `getValidUser(minimumValiditySeconds?)`      | Returns the user or renews it when needed.                    |
 | `cancel()`                                   | Cancels pending native navigation; it is a no-op on web.      |
 | `dispose()`                                  | Stops renewal and disposes platform lifecycle work.           |
 
