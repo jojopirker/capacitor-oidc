@@ -12,10 +12,12 @@ const demos = [
 ];
 
 const activeIndex = ref(0);
-const paused = ref(true);
+const userPaused = ref(true);
+const interactionPaused = ref(false);
 const reduceMotion = ref(true);
 const video = ref<HTMLVideoElement>();
 const activeDemo = computed(() => demos[activeIndex.value]);
+const paused = computed(() => userPaused.value || interactionPaused.value);
 
 onMounted(() => {
   reduceMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -32,7 +34,7 @@ function selectDemo(index: number): void {
 function advance(): void {
   if (paused.value) return;
   if (reduceMotion.value) {
-    paused.value = true;
+    userPaused.value = true;
     return;
   }
 
@@ -40,24 +42,33 @@ function advance(): void {
 }
 
 function pause(): void {
-  paused.value = true;
+  userPaused.value = true;
   video.value?.pause();
 }
 
 function resume(): void {
   if (reduceMotion.value) return;
-  paused.value = false;
-  void video.value?.play();
+  userPaused.value = false;
+  if (!interactionPaused.value) void video.value?.play();
+}
+
+function suspend(): void {
+  interactionPaused.value = true;
+  video.value?.pause();
+}
+
+function unsuspend(): void {
+  interactionPaused.value = false;
+  if (!userPaused.value && !reduceMotion.value) void video.value?.play();
 }
 
 function togglePlayback(): void {
-  if (!paused.value) {
+  if (!userPaused.value) {
     pause();
     return;
   }
 
-  paused.value = false;
-  void video.value?.play();
+  resume();
 }
 
 function selectAndResume(index: number): void {
@@ -102,10 +113,10 @@ function navigateTabs(event: KeyboardEvent, index: number): void {
         class="HomeDemo-tabs"
         role="tablist"
         aria-label="Demo platform"
-        @focusin="pause"
-        @focusout="resume"
-        @mouseenter="pause"
-        @mouseleave="resume"
+        @focusin="suspend"
+        @focusout="unsuspend"
+        @mouseenter="suspend"
+        @mouseleave="unsuspend"
       >
         <button
           v-for="(demo, index) in demos"
