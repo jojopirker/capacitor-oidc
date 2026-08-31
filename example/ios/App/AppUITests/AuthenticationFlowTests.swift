@@ -97,13 +97,13 @@ final class AuthenticationFlowTests: XCTestCase {
         browser.buttons["Sign In"].tap()
 
         let signedIn = app.staticTexts["Hello, demo"]
-        let notNowButton = browser.buttons["Not Now"]
+        let savePasswordAlert = app.alerts["Save Password?"]
         let loginDeadline = Date().addingTimeInterval(timeout)
-        while !notNowButton.exists && !signedIn.exists && Date() < loginDeadline {
+        while !savePasswordAlert.exists && !signedIn.exists && Date() < loginDeadline {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
-        if notNowButton.exists {
-            notNowButton.tap()
+        if savePasswordAlert.exists {
+            savePasswordAlert.buttons["Not Now"].tap()
         }
         XCTAssertTrue(signedIn.waitForExistence(timeout: max(0, loginDeadline.timeIntervalSinceNow)))
 
