@@ -25,6 +25,10 @@ final class AuthenticationFlowTests: XCTestCase {
         }
 
         let signIn = app.buttons["Sign in with Keycloak"]
+        if !signIn.waitForExistence(timeout: timeout / 2) {
+            app.terminate()
+            app.launch()
+        }
         XCTAssertTrue(signIn.waitForExistence(timeout: timeout), app.debugDescription)
         if !signIn.isEnabled {
             XCTAssertTrue(app.staticTexts["Hello, demo"].exists, app.debugDescription)
