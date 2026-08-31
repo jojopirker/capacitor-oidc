@@ -5,6 +5,11 @@ const command = 'npm i capacitor-oidc';
 const copyLabel = ref('Copy');
 
 function copyCommand(): void {
+  if (!navigator.clipboard) {
+    copyLabel.value = 'Retry';
+    return;
+  }
+
   void navigator.clipboard.writeText(command).then(
     () => {
       copyLabel.value = 'Copied';
