@@ -142,7 +142,7 @@ jobs:
         id: example-simulator
         run: |
           defaults write com.apple.iphonesimulator ConnectHardwareKeyboard -bool false
-          simulator_id="$(xcrun simctl create 'Capacitor OIDC E2E' com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro com.apple.CoreSimulator.SimRuntime.iOS-26-5)"
+          simulator_id="$(xcrun simctl create 'Capacitor OIDC E2E' com.apple.CoreSimulator.SimDeviceType.iPhone-17-Pro com.apple.CoreSimulator.SimRuntime.iOS-26-2)"
           echo "id=$simulator_id" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$simulator_id"
           xcrun simctl bootstatus "$simulator_id" -b
