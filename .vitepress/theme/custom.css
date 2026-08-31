@@ -3,6 +3,9 @@
   --vp-c-brand-2: #5f3827;
   --vp-c-brand-3: #74432d;
   --vp-c-brand-soft: rgb(102 115 60 / 14%);
+  --capacitor-oidc-card-shadow: 0 0 0 1px rgb(0 0 0 / 6%), 0 1px 2px -1px rgb(0 0 0 / 6%), 0 2px 4px rgb(0 0 0 / 4%);
+  --capacitor-oidc-card-shadow-hover:
+    0 0 0 1px rgb(0 0 0 / 8%), 0 1px 2px -1px rgb(0 0 0 / 8%), 0 2px 4px rgb(0 0 0 / 6%);
 }
 
 .dark {
@@ -10,4 +13,134 @@
   --vp-c-brand-2: #a86d4e;
   --vp-c-brand-3: #70422e;
   --vp-c-brand-soft: rgb(102 115 60 / 18%);
+  --capacitor-oidc-card-shadow: 0 0 0 1px rgb(255 255 255 / 8%);
+  --capacitor-oidc-card-shadow-hover: 0 0 0 1px rgb(255 255 255 / 13%);
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.VPHero .name,
+.VPHero .text {
+  text-wrap: balance;
+}
+
+.VPHero .tagline,
+.VPFeature .details {
+  text-wrap: pretty;
+}
+
+.VPFeature {
+  border: 0;
+  box-shadow: var(--capacitor-oidc-card-shadow);
+  transition-property: box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.VPFeature:hover {
+  box-shadow: var(--capacitor-oidc-card-shadow-hover);
+}
+
+.VPButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  white-space: nowrap;
+  transition-property: background-color, border-color, color, transform;
+  gap: 8px;
+}
+
+.VPButton:active {
+  transform: scale(0.96);
+}
+
+.VPHero .VPButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.VPHero .VPButton::after {
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  background: currentColor;
+  content: '';
+}
+
+.VPHero .VPButton[href$='/docs/GETTING_STARTED']::after {
+  mask: url('../../node_modules/lucide-static/icons/arrow-right.svg') center / contain no-repeat;
+}
+
+.VPHero .VPButton[href*='github.com/jojopirker/capacitor-oidc']::after {
+  mask: url('../../node_modules/simple-icons/icons/github.svg') center / contain no-repeat;
+}
+
+.VPHero .VPButton[href*='npmjs.com/package/capacitor-oidc']::after {
+  mask: url('../../node_modules/simple-icons/icons/npm.svg') center / contain no-repeat;
+}
+
+@media (max-width: 959px) {
+  .VPHero .image {
+    margin: -72px -24px -28px;
+  }
+
+  .VPHero .image-container {
+    width: 280px;
+    height: 280px;
+  }
+
+  .VPHero .image-src {
+    max-width: 220px;
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 639px) {
+  .VPHero {
+    padding-right: 24px;
+    padding-bottom: 48px;
+    padding-left: 24px;
+  }
+
+  .VPHero .image {
+    margin: -48px -24px -20px;
+  }
+
+  .VPHero .image-container {
+    width: 220px;
+    height: 220px;
+  }
+
+  .VPHero .image-src {
+    max-width: 168px;
+    max-height: 168px;
+  }
+
+  .VPHero .actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin: 0;
+    padding-top: 22px;
+    gap: 8px;
+  }
+
+  .VPHero .action {
+    padding: 0;
+  }
+
+  .VPHero .action:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .VPHero .VPButton {
+    justify-content: center;
+    width: 100%;
+  }
 }

@@ -108,14 +108,14 @@ A runnable Keycloak-backed iOS application and its UI test live in
 
 ## Documentation
 
-- [Getting started](docs/GETTING_STARTED.md)
-- [iOS and Android setup](docs/PLATFORM_SETUP.md)
-- [Provider configuration](docs/PROVIDERS.md)
-- [API and `oidc-client-ts` compatibility](docs/API.md)
-- [Sessions, secure storage, and widgets](docs/SESSIONS_AND_WIDGETS.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.md)
-- [Testing status](docs/TESTING.md)
-- [Security](SECURITY.md)
+- [Getting started](https://jojopirker.github.io/capacitor-oidc/docs/GETTING_STARTED)
+- [iOS and Android setup](https://jojopirker.github.io/capacitor-oidc/docs/PLATFORM_SETUP)
+- [Provider configuration](https://jojopirker.github.io/capacitor-oidc/docs/PROVIDERS)
+- [API and `oidc-client-ts` compatibility](https://jojopirker.github.io/capacitor-oidc/docs/API)
+- [Sessions, secure storage, and widgets](https://jojopirker.github.io/capacitor-oidc/docs/SESSIONS_AND_WIDGETS)
+- [Troubleshooting](https://jojopirker.github.io/capacitor-oidc/docs/TROUBLESHOOTING)
+- [Testing status](https://jojopirker.github.io/capacitor-oidc/docs/TESTING)
+- [Security](https://jojopirker.github.io/capacitor-oidc/SECURITY)
 
 ## Development
 
