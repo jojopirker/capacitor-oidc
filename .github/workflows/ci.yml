@@ -81,6 +81,7 @@ jobs:
           - capacitor: 8.5.0
             app: 8.1.1
     env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
       KEYCLOAK_VERSION: 26.6.4
     steps:
       - name: Check out repository
