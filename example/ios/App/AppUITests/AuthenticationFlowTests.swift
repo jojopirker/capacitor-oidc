@@ -107,7 +107,9 @@ final class AuthenticationFlowTests: XCTestCase {
         }
         XCTAssertTrue(signedIn.waitForExistence(timeout: max(0, loginDeadline.timeIntervalSinceNow)))
 
-        app.buttons["Renew session"].tap()
+        app.buttons["Renew session"].coordinate(
+            withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)
+        ).tap()
         XCTAssertTrue(app.staticTexts["Session renewed through the refresh token"].waitForExistence(timeout: timeout))
 
         app.buttons["Sign out"].tap()
