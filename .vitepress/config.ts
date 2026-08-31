@@ -1,7 +1,9 @@
 import { defineConfig } from 'vitepress';
+import llmstxt from 'vitepress-plugin-llms';
 
 const repository = 'https://github.com/jojopirker/capacitor-oidc';
 const base = '/capacitor-oidc/';
+const site = 'https://jojopirker.github.io/capacitor-oidc/';
 
 export default defineConfig({
   title: 'capacitor-oidc',
@@ -12,8 +14,12 @@ export default defineConfig({
   appearance: 'force-auto',
   cleanUrls: true,
   lastUpdated: true,
+  sitemap: {
+    hostname: site,
+  },
   srcDir: '.',
   srcExclude: [
+    'README.md',
     'node_modules/**',
     'dist/**',
     'example/node_modules/**',
@@ -23,7 +29,7 @@ export default defineConfig({
   ],
   ignoreDeadLinks: ['./LICENSE'],
   rewrites: {
-    'README.md': 'index.md',
+    'docs/HOME.md': 'index.md',
     'docs/README.md': 'docs/index.md',
     'example/README.md': 'example/index.md',
     'examples/vue/README.md': 'examples/vue/index.md',
@@ -36,18 +42,22 @@ export default defineConfig({
       dark: 'github-dark-default',
     },
   },
+  vite: {
+    plugins: [llmstxt()],
+  },
   themeConfig: {
     logo: '/logo.png',
     nav: [
+      { text: 'Home', link: '/' },
       { text: 'Docs', link: '/docs/GETTING_STARTED' },
-      { text: 'API', link: '/docs/API' },
       { text: 'Troubleshooting', link: '/docs/TROUBLESHOOTING' },
+      { text: 'GitHub', link: repository },
     ],
     sidebar: [
       {
         text: 'Start here',
         items: [
-          { text: 'Introduction', link: '/' },
+          { text: 'Documentation', link: '/docs/' },
           { text: 'Getting started', link: '/docs/GETTING_STARTED' },
         ],
       },
@@ -87,7 +97,6 @@ export default defineConfig({
       pattern: ({ filePath }) => `https://github.com/jojopirker/capacitor-oidc/edit/main/${filePath}`,
       text: 'Edit this page on GitHub',
     },
-    socialLinks: [{ icon: 'github', link: repository }],
     lastUpdated: {
       text: 'Last updated',
     },
