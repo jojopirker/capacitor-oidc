@@ -7,14 +7,33 @@ final class AuthenticationFlowTests: XCTestCase {
         let app = XCUIApplication()
         app.launch()
 
-        let signIn = app.buttons["Sign in with Keycloak"]
-        XCTAssertTrue(signIn.waitForExistence(timeout: timeout), app.debugDescription)
-        signIn.tap()
-
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let continueButton = springboard.buttons.matching(
             NSPredicate(format: "label IN %@", ["Continue", "Fortfahren"])
         ).firstMatch
+        let signedOut = app.staticTexts["Signed out"]
+        func waitForSignOut() {
+            let deadline = Date().addingTimeInterval(timeout)
+            while !continueButton.exists && !signedOut.exists && Date() < deadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+            }
+            if continueButton.exists {
+                continueButton.tap()
+            }
+            XCTAssertTrue(signedOut.waitForExistence(timeout: timeout))
+            XCTAssertTrue(app.staticTexts["Provider and local session cleared"].exists)
+        }
+
+        let signIn = app.buttons["Sign in with Keycloak"]
+        XCTAssertTrue(signIn.waitForExistence(timeout: timeout), app.debugDescription)
+        if !signIn.isEnabled {
+            XCTAssertTrue(app.staticTexts["Hello, demo"].exists, app.debugDescription)
+            app.buttons["Sign out"].tap()
+            waitForSignOut()
+            XCTAssertTrue(signIn.isEnabled, app.debugDescription)
+        }
+        signIn.tap()
+
         let browser = XCUIApplication(bundleIdentifier: "com.apple.SafariViewService")
         let webView = browser.webViews.firstMatch
         let presentationDeadline = Date().addingTimeInterval(timeout)
@@ -50,21 +69,21 @@ final class AuthenticationFlowTests: XCTestCase {
         password.typeText("demo")
         browser.buttons["Sign In"].tap()
 
-        XCTAssertTrue(app.staticTexts["Hello, demo"].waitForExistence(timeout: timeout))
+        let signedIn = app.staticTexts["Hello, demo"]
+        let notNowButton = springboard.buttons["Not Now"]
+        let loginDeadline = Date().addingTimeInterval(timeout)
+        while !notNowButton.exists && !signedIn.exists && Date() < loginDeadline {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        if notNowButton.exists {
+            notNowButton.tap()
+        }
+        XCTAssertTrue(signedIn.waitForExistence(timeout: max(0, loginDeadline.timeIntervalSinceNow)))
 
         app.buttons["Renew session"].tap()
         XCTAssertTrue(app.staticTexts["Session renewed through the refresh token"].waitForExistence(timeout: timeout))
 
         app.buttons["Sign out"].tap()
-        let signedOut = app.staticTexts["Signed out"]
-        let signOutDeadline = Date().addingTimeInterval(timeout)
-        while !continueButton.exists && !signedOut.exists && Date() < signOutDeadline {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        if continueButton.exists {
-            continueButton.tap()
-        }
-        XCTAssertTrue(signedOut.waitForExistence(timeout: timeout))
-        XCTAssertTrue(app.staticTexts["Provider and local session cleared"].exists)
+        waitForSignOut()
     }
 }
