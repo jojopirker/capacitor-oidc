@@ -54,8 +54,15 @@ final class AuthenticationFlowTests: XCTestCase {
         )
         let username = browser.textFields["Username or email"]
         XCTAssertTrue(username.waitForExistence(timeout: timeout))
-        username.tap()
-        username.typeText("demo")
+        let keyboard = browser.keyboards.firstMatch
+        for _ in 0..<3 where !keyboard.exists {
+            username.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            _ = keyboard.waitForExistence(timeout: 2)
+        }
+        XCTAssertTrue(keyboard.exists, browser.debugDescription)
+        for key in ["d", "e", "m", "o"] {
+            browser.keys[key].tap()
+        }
 
         let password = browser.secureTextFields["Password"]
         XCTAssertTrue(password.waitForExistence(timeout: timeout))
@@ -70,7 +77,9 @@ final class AuthenticationFlowTests: XCTestCase {
             advance.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         }
         XCTAssertTrue(password.hasFocus)
-        password.typeText("demo")
+        for key in ["d", "e", "m", "o"] {
+            browser.keys[key].tap()
+        }
         browser.buttons["Sign In"].tap()
 
         let signedIn = app.staticTexts["Hello, demo"]
