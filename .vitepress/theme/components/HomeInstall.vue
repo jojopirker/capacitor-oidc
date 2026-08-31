@@ -2,12 +2,16 @@
 import { ref } from 'vue';
 
 const command = 'npm i capacitor-oidc';
-const copied = ref(false);
+const copyLabel = ref('Copy');
 
 function copyCommand(): void {
-  void navigator.clipboard.writeText(command);
-  copied.value = true;
-  window.setTimeout(() => (copied.value = false), 1600);
+  void navigator.clipboard.writeText(command).then(
+    () => {
+      copyLabel.value = 'Copied';
+      window.setTimeout(() => (copyLabel.value = 'Copy'), 1600);
+    },
+    () => (copyLabel.value = 'Retry'),
+  );
 }
 </script>
 
@@ -20,11 +24,11 @@ function copyCommand(): void {
     <button
       class="HomeInstall-copy"
       type="button"
-      :aria-label="copied ? 'Copied install command' : 'Copy install command'"
+      :aria-label="`${copyLabel} install command`"
       @click="copyCommand"
     >
       <span class="HomeInstall-copy-icon" aria-hidden="true"></span>
-      <span class="HomeInstall-copy-label">{{ copied ? 'Copied' : 'Copy' }}</span>
+      <span class="HomeInstall-copy-label">{{ copyLabel }}</span>
     </button>
   </div>
 </template>

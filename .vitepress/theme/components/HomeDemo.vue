@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
 
 import androidDemo from '../../../docs/assets/capacitor-oidc-demo-android.mp4';
 import iosDemo from '../../../docs/assets/capacitor-oidc-demo-ios.mp4';
@@ -18,11 +18,21 @@ const reduceMotion = ref(true);
 const video = ref<HTMLVideoElement>();
 const activeDemo = computed(() => demos[activeIndex.value]);
 const paused = computed(() => userPaused.value || interactionPaused.value);
+let motionPreference: MediaQueryList;
 
 onMounted(() => {
-  reduceMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
+  reduceMotion.value = motionPreference.matches;
   if (!reduceMotion.value) void nextTick(resume);
+  motionPreference.addEventListener('change', updateMotionPreference);
 });
+
+onUnmounted(() => motionPreference.removeEventListener('change', updateMotionPreference));
+
+function updateMotionPreference(event: MediaQueryListEvent): void {
+  reduceMotion.value = event.matches;
+  if (event.matches) pause();
+}
 
 function selectDemo(index: number): void {
   activeIndex.value = index;
