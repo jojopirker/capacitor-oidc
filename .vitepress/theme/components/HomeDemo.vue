@@ -68,7 +68,8 @@ function togglePlayback(): void {
     return;
   }
 
-  resume();
+  userPaused.value = false;
+  if (!interactionPaused.value) void video.value?.play();
 }
 
 function selectAndResume(index: number): void {
