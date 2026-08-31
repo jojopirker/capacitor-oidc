@@ -59,7 +59,7 @@ function suspend(): void {
 
 function unsuspend(): void {
   interactionPaused.value = false;
-  if (!userPaused.value && !reduceMotion.value) void video.value?.play();
+  if (!userPaused.value) void video.value?.play();
 }
 
 function togglePlayback(): void {
