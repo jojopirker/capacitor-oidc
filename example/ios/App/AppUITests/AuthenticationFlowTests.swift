@@ -59,12 +59,10 @@ final class AuthenticationFlowTests: XCTestCase {
         if !username.waitForExistence(timeout: timeout) {
             browser.terminate()
             app.activate()
-            XCTAssertTrue(signIn.waitForExistence(timeout: timeout), app.debugDescription)
-            let retryDeadline = Date().addingTimeInterval(timeout)
-            while !signIn.isEnabled && Date() < retryDeadline {
-                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-            }
-            XCTAssertTrue(signIn.isEnabled, app.debugDescription)
+            let authenticationFailed = app.staticTexts.matching(
+                NSPredicate(format: "label BEGINSWITH %@", "Authentication failed:")
+            ).firstMatch
+            XCTAssertTrue(authenticationFailed.waitForExistence(timeout: timeout), app.debugDescription)
             username = openLogin()
         }
         XCTAssertTrue(username.waitForExistence(timeout: timeout), browser.debugDescription)
