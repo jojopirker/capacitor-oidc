@@ -75,15 +75,15 @@ html {
 }
 
 .VPHero .VPButton[href$='/docs/GETTING_STARTED']::after {
-  mask: url('./icons/arrow-right.svg') center / contain no-repeat;
+  mask: url('../../node_modules/lucide-static/icons/arrow-right.svg') center / contain no-repeat;
 }
 
 .VPHero .VPButton[href*='github.com/jojopirker/capacitor-oidc']::after {
-  mask: url('./icons/github.svg') center / contain no-repeat;
+  mask: url('../../node_modules/simple-icons/icons/github.svg') center / contain no-repeat;
 }
 
 .VPHero .VPButton[href*='npmjs.com/package/capacitor-oidc']::after {
-  mask: url('./icons/npm.svg') center / contain no-repeat;
+  mask: url('../../node_modules/simple-icons/icons/npm.svg') center / contain no-repeat;
 }
 
 @media (max-width: 959px) {

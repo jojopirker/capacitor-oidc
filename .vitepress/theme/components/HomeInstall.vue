@@ -88,7 +88,7 @@ function copyCommand(): void {
   width: 18px;
   height: 18px;
   background: currentColor;
-  mask: url('../icons/copy.svg') center / contain no-repeat;
+  mask: url('../../../node_modules/lucide-static/icons/copy.svg') center / contain no-repeat;
 }
 
 @media (max-width: 639px) {
