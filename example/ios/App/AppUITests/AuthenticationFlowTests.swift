@@ -57,9 +57,14 @@ final class AuthenticationFlowTests: XCTestCase {
 
         var username = openLogin()
         if !username.waitForExistence(timeout: timeout) {
-            app.terminate()
-            app.launch()
+            browser.terminate()
+            app.activate()
             XCTAssertTrue(signIn.waitForExistence(timeout: timeout), app.debugDescription)
+            let retryDeadline = Date().addingTimeInterval(timeout)
+            while !signIn.isEnabled && Date() < retryDeadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+            }
+            XCTAssertTrue(signIn.isEnabled, app.debugDescription)
             username = openLogin()
         }
         XCTAssertTrue(username.waitForExistence(timeout: timeout), browser.debugDescription)
@@ -92,7 +97,7 @@ final class AuthenticationFlowTests: XCTestCase {
         browser.buttons["Sign In"].tap()
 
         let signedIn = app.staticTexts["Hello, demo"]
-        let notNowButton = springboard.buttons["Not Now"]
+        let notNowButton = browser.buttons["Not Now"]
         let loginDeadline = Date().addingTimeInterval(timeout)
         while !notNowButton.exists && !signedIn.exists && Date() < loginDeadline {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
