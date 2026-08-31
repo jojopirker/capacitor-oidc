@@ -13,12 +13,13 @@ const demos = [
 
 const activeIndex = ref(0);
 const paused = ref(false);
-const reduceMotion = ref(false);
+const reduceMotion = ref(true);
 const video = ref<HTMLVideoElement>();
 const activeDemo = computed(() => demos[activeIndex.value]);
 
 onMounted(() => {
   reduceMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reduceMotion.value) void nextTick(() => video.value?.play());
 });
 
 function selectDemo(index: number): void {
@@ -45,6 +46,24 @@ function resume(): void {
 function selectAndResume(index: number): void {
   selectDemo(index);
   resume();
+}
+
+function navigateTabs(event: KeyboardEvent, index: number): void {
+  const nextIndex = {
+    ArrowLeft: (index - 1 + demos.length) % demos.length,
+    ArrowRight: (index + 1) % demos.length,
+    Home: 0,
+    End: demos.length - 1,
+  }[event.key];
+
+  if (nextIndex === undefined) return;
+
+  event.preventDefault();
+  selectDemo(nextIndex);
+  const tabs = (event.currentTarget as HTMLButtonElement).parentElement!.querySelectorAll<HTMLButtonElement>(
+    '[role="tab"]',
+  );
+  tabs[nextIndex].focus();
 }
 </script>
 
@@ -77,6 +96,7 @@ function selectAndResume(index: number): void {
           :tabindex="activeIndex === index ? 0 : -1"
           :class="{ 'is-active': activeIndex === index }"
           @click="selectAndResume(index)"
+          @keydown="navigateTabs($event, index)"
         >
           {{ demo.label }}
           <span class="HomeDemo-tab-progress" aria-hidden="true">
