@@ -2,8 +2,21 @@ import AuthenticationServices
 import Capacitor
 import Foundation
 
+@MainActor
+private final class AuthenticationPresentationContextProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+    private let anchor: ASPresentationAnchor
+
+    init(anchor: ASPresentationAnchor) {
+        self.anchor = anchor
+    }
+
+    func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        anchor
+    }
+}
+
 @objc(CapacitorOidcPlugin)
-public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthenticationPresentationContextProviding {
+public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin {
     public let identifier = "CapacitorOidcPlugin"
     public let jsName = "CapacitorOidc"
     public let pluginMethods: [CAPPluginMethod] = [
@@ -19,9 +32,10 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
 
     private var accessGroup: String?
     private var accessibility = TokenVaultAccessibility.afterFirstUnlockThisDeviceOnly
-    private var authenticationSession: ASWebAuthenticationSession?
-    private var authenticationSessionID: UUID?
-    private var authenticationCall: CAPPluginCall?
+    @MainActor private var authenticationSession: ASWebAuthenticationSession?
+    @MainActor private var authenticationSessionID: UUID?
+    @MainActor private var authenticationCall: CAPPluginCall?
+    @MainActor private var authenticationPresentationContextProvider: AuthenticationPresentationContextProvider?
 
     @objc public func configure(_ call: CAPPluginCall) {
         accessGroup = call.getString("keychainAccessGroup")
@@ -34,6 +48,19 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
     }
 
     @objc public func open(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            self.startAuthentication(call)
+        }
+    }
+
+    @objc public func cancel(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            self.cancelAuthentication(call)
+        }
+    }
+
+    @MainActor
+    private func startAuthentication(_ call: CAPPluginCall) {
         guard authenticationSession == nil else {
             call.reject("An authentication session is already active", "AUTH_SESSION_IN_PROGRESS")
             return
@@ -46,6 +73,11 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
         }
         guard isSecureRequestURL(url) else {
             call.reject("The authentication URL must use HTTPS outside loopback development", "BROWSER_UNAVAILABLE")
+            return
+        }
+        guard let presentationAnchor = bridge?.viewController?.viewIfLoaded?.window,
+              presentationAnchor.windowScene?.activationState == .foregroundActive else {
+            call.reject("The app has no active presentation window", "BROWSER_UNAVAILABLE")
             return
         }
 
@@ -75,26 +107,31 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
             session = ASWebAuthenticationSession(url: url, callbackURLScheme: scheme, completionHandler: completion)
         }
 
-        session.presentationContextProvider = self
+        let presentationContextProvider = AuthenticationPresentationContextProvider(anchor: presentationAnchor)
+        session.presentationContextProvider = presentationContextProvider
         session.prefersEphemeralWebBrowserSession = call.getBool("prefersEphemeralWebBrowserSession") ?? false
         authenticationCall = call
         authenticationSession = session
         authenticationSessionID = sessionID
+        authenticationPresentationContextProvider = presentationContextProvider
         guard session.start() else {
             authenticationCall = nil
             authenticationSession = nil
             authenticationSessionID = nil
+            authenticationPresentationContextProvider = nil
             call.reject("The system authentication session could not start", "BROWSER_UNAVAILABLE")
             return
         }
     }
 
-    @objc public func cancel(_ call: CAPPluginCall) {
+    @MainActor
+    private func cancelAuthentication(_ call: CAPPluginCall) {
         let activeCall = authenticationCall
         let activeSession = authenticationSession
         authenticationCall = nil
         authenticationSession = nil
         authenticationSessionID = nil
+        authenticationPresentationContextProvider = nil
         activeSession?.cancel()
         activeCall?.reject("The user cancelled authentication", "USER_CANCELLED")
         call.resolve()
@@ -144,16 +181,14 @@ public final class CapacitorOidcPlugin: CAPPlugin, CAPBridgedPlugin, ASWebAuthen
         }
     }
 
-    public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
-        bridge?.viewController?.view.window ?? ASPresentationAnchor()
-    }
-
+    @MainActor
     private func completeAuthentication(sessionID: UUID, callbackURL: URL?, error: Error?) {
         guard authenticationSessionID == sessionID else { return }
         let call = authenticationCall
         authenticationCall = nil
         authenticationSession = nil
         authenticationSessionID = nil
+        authenticationPresentationContextProvider = nil
 
         if let sessionError = error as? ASWebAuthenticationSessionError, sessionError.code == .canceledLogin {
             call?.reject("The user cancelled authentication", "USER_CANCELLED")
