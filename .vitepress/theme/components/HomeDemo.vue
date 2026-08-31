@@ -12,14 +12,14 @@ const demos = [
 ];
 
 const activeIndex = ref(0);
-const paused = ref(false);
+const paused = ref(true);
 const reduceMotion = ref(true);
 const video = ref<HTMLVideoElement>();
 const activeDemo = computed(() => demos[activeIndex.value]);
 
 onMounted(() => {
   reduceMotion.value = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (!reduceMotion.value) void nextTick(() => video.value?.play());
+  if (!reduceMotion.value) void nextTick(resume);
 });
 
 function selectDemo(index: number): void {
@@ -30,7 +30,13 @@ function selectDemo(index: number): void {
 }
 
 function advance(): void {
-  if (!reduceMotion.value && !paused.value) selectDemo((activeIndex.value + 1) % demos.length);
+  if (paused.value) return;
+  if (reduceMotion.value) {
+    paused.value = true;
+    return;
+  }
+
+  selectDemo((activeIndex.value + 1) % demos.length);
 }
 
 function pause(): void {
@@ -39,12 +45,28 @@ function pause(): void {
 }
 
 function resume(): void {
+  if (reduceMotion.value) return;
   paused.value = false;
-  if (!reduceMotion.value) void video.value?.play();
+  void video.value?.play();
+}
+
+function togglePlayback(): void {
+  if (!paused.value) {
+    pause();
+    return;
+  }
+
+  paused.value = false;
+  void video.value?.play();
 }
 
 function selectAndResume(index: number): void {
   selectDemo(index);
+  if (reduceMotion.value) {
+    pause();
+    return;
+  }
+
   resume();
 }
 
@@ -117,14 +139,21 @@ function navigateTabs(event: KeyboardEvent, index: number): void {
             :key="activeDemo.id"
             ref="video"
             :src="activeDemo.src"
-            :autoplay="!reduceMotion"
-            :controls="reduceMotion"
+            :autoplay="!reduceMotion && !paused"
             muted
             playsinline
             preload="metadata"
             @ended="advance"
           ></video>
         </Transition>
+        <button
+          class="HomeDemo-playback"
+          type="button"
+          :aria-label="paused ? 'Play demo' : 'Pause demo'"
+          @click="togglePlayback"
+        >
+          {{ paused ? 'Play' : 'Pause' }}
+        </button>
       </div>
     </div>
   </section>
@@ -266,6 +295,36 @@ function navigateTabs(event: KeyboardEvent, index: number): void {
   object-fit: contain;
   outline: 1px solid rgb(255 255 255 / 10%);
   outline-offset: -1px;
+}
+
+.HomeDemo-playback {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1;
+  min-width: 64px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--vp-c-text-1);
+  background: var(--vp-c-bg);
+  box-shadow: var(--capacitor-oidc-card-shadow);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition-property: color, background-color, transform;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.HomeDemo-playback:hover {
+  color: var(--vp-c-brand-1);
+}
+
+.HomeDemo-playback:active {
+  transform: scale(0.96);
 }
 
 .HomeDemo-media-enter-active,
