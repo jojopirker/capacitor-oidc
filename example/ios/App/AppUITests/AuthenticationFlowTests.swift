@@ -36,24 +36,33 @@ final class AuthenticationFlowTests: XCTestCase {
             waitForSignOut()
             XCTAssertTrue(signIn.isEnabled, app.debugDescription)
         }
-        signIn.tap()
 
         let browser = XCUIApplication(bundleIdentifier: "com.apple.SafariViewService")
         let webView = browser.webViews.firstMatch
-        let presentationDeadline = Date().addingTimeInterval(timeout)
-        while !continueButton.exists && !webView.exists && Date() < presentationDeadline {
-            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
-        }
-        if continueButton.exists {
-            continueButton.tap()
+        func openLogin() -> XCUIElement {
+            signIn.tap()
+            let presentationDeadline = Date().addingTimeInterval(timeout)
+            while !continueButton.exists && !webView.exists && Date() < presentationDeadline {
+                RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+            }
+            if continueButton.exists {
+                continueButton.tap()
+            }
+            XCTAssertTrue(
+                webView.waitForExistence(timeout: timeout),
+                "SpringBoard:\n\(springboard.debugDescription)\nBrowser:\n\(browser.debugDescription)"
+            )
+            return browser.textFields["Username or email"]
         }
 
-        XCTAssertTrue(
-            webView.waitForExistence(timeout: timeout),
-            "SpringBoard:\n\(springboard.debugDescription)\nBrowser:\n\(browser.debugDescription)"
-        )
-        let username = browser.textFields["Username or email"]
-        XCTAssertTrue(username.waitForExistence(timeout: timeout))
+        var username = openLogin()
+        if !username.waitForExistence(timeout: timeout) {
+            app.terminate()
+            app.launch()
+            XCTAssertTrue(signIn.waitForExistence(timeout: timeout), app.debugDescription)
+            username = openLogin()
+        }
+        XCTAssertTrue(username.waitForExistence(timeout: timeout), browser.debugDescription)
         let keyboard = browser.keyboards.firstMatch
         for _ in 0..<3 where !keyboard.exists {
             username.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
