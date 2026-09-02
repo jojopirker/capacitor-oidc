@@ -41,7 +41,7 @@ This example signs in against a local Keycloak realm with Authorization Code
 Flow and PKCE, renews the session through its refresh token, and signs out at
 the provider.
 
-![Capacitor OIDC login, renewal, and logout on the iOS Simulator](docs/assets/capacitor-oidc-demo.gif)
+[![Capacitor OIDC login, renewal, and logout on the iOS Simulator](docs/assets/capacitor-oidc-demo.gif)](https://jojopirker.github.io/capacitor-oidc/)
 
 ## Requirements
 

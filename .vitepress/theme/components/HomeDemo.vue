@@ -6,7 +6,7 @@ import iosDemo from '../../../docs/assets/capacitor-oidc-demo-ios.mp4';
 import webDemo from '../../../docs/assets/capacitor-oidc-demo-web.mp4';
 
 const demos = [
-  { id: 'ios', label: 'iOS', src: iosDemo, duration: 18_267 },
+  { id: 'ios', label: 'iOS', src: iosDemo, duration: 18_900 },
   { id: 'android', label: 'Android', src: androidDemo, duration: 8_509 },
   { id: 'web', label: 'Web', src: webDemo, duration: 8_833 },
 ];
