@@ -65,7 +65,7 @@ All protocol networking uses normal global fetch.
 - Adapting `INavigator` to native authentication UI.
 - Adapting `StateStore` to native secure storage.
 - A native-readable, versioned session record for widgets.
-- Refresh serialization and application-resume renewal.
+- Native refresh serialization and application-resume renewal.
 - Runtime configuration resolution and a small portable API around interactive
   signin and signout.
 
@@ -176,7 +176,8 @@ requirements from the other endpoints.
 
 ## Session renewal
 
-`oidc-client-ts` performs scheduled foreground renewal. The adapter adds:
+`oidc-client-ts` performs scheduled foreground renewal. On native platforms,
+the adapter adds:
 
 - A single-flight `signinSilent()` so rotating refresh tokens cannot be used by
   concurrent refresh requests.
@@ -188,6 +189,8 @@ An `invalid_grant` refresh result clears the local session. A transient network
 failure does not destroy the refresh token.
 
 This design does not promise exact refresh timing while the app is suspended.
+The web implementation retains the upstream `signinSilent()` behavior,
+including independent concurrent calls and their per-call arguments.
 
 ## Secure storage
 

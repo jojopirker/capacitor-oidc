@@ -673,6 +673,43 @@ describe('CapacitorUserManager', () => {
     await manager.dispose();
   });
 
+  it('preserves independent silent sign-in requests on web', async () => {
+    runtime.platform = 'web';
+    const manager = await CapacitorUserManager.create({
+      common: {
+        authority: settings.authority,
+        client_id: 'web-renewal',
+        automaticSilentRenew: false,
+      },
+      web: {
+        settings: { redirect_uri: 'https://app.example/callback' },
+      },
+    });
+    const firstUser = new User({
+      access_token: 'first-access',
+      token_type: 'Bearer',
+      profile: { sub: 'first-subject' },
+    });
+    const secondUser = new User({
+      access_token: 'second-access',
+      token_type: 'Bearer',
+      profile: { sub: 'second-subject' },
+    });
+    const signinSilent = vi
+      .spyOn(UserManager.prototype, 'signinSilent')
+      .mockResolvedValueOnce(firstUser)
+      .mockResolvedValueOnce(secondUser);
+
+    const first = manager.signinSilent({ forceIframeAuth: true });
+    const second = manager.signinSilent({ resource: 'api://second' });
+
+    expect(signinSilent).toHaveBeenNthCalledWith(1, { forceIframeAuth: true });
+    expect(signinSilent).toHaveBeenNthCalledWith(2, { resource: 'api://second' });
+    await expect(Promise.all([first, second])).resolves.toEqual([firstUser, secondUser]);
+    signinSilent.mockRestore();
+    await manager.dispose();
+  });
+
   it('stops web session monitoring during disposal', async () => {
     runtime.platform = 'web';
     const manager = await CapacitorUserManager.create({

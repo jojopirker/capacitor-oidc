@@ -135,9 +135,10 @@ if (user) {
 ```
 
 `getValidUser(30)` returns the current user when its access token is valid for at
-least 30 more seconds. Otherwise it performs one renewal. Concurrent renewal
-triggers share the same request. Native renewal requires a refresh token and
-never falls back to an iframe; web renewal retains the normal browser behavior.
+least 30 more seconds. Otherwise it performs one renewal. On native platforms,
+concurrent renewal triggers share the same request. Native renewal requires a
+refresh token and never falls back to an iframe; web renewal retains the normal
+browser behavior, including independent concurrent calls.
 
 ## 7. Sign out and dispose
 
