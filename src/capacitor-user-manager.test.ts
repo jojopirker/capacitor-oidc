@@ -435,7 +435,7 @@ describe('CapacitorUserManager', () => {
     },
   );
 
-  it('blocks resume renewal throughout overlapping session changes and reopens after failure', async () => {
+  it('replays blocked renewal after the final session change fails', async () => {
     const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
     // Finish the startup check before exercising resume admission.
     await manager.removeUser();
@@ -456,7 +456,6 @@ describe('CapacitorUserManager', () => {
 
     rejectSignin(new Error('cancelled'));
     await failedSignin;
-    appState.listener?.({ isActive: true });
     expect(check).toHaveBeenCalledTimes(1);
     await manager.dispose();
     appState.listener?.({ isActive: true });

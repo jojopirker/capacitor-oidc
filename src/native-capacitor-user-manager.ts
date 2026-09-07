@@ -26,6 +26,7 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
   private automaticRenewalPromise?: Promise<User | null>;
   private refreshPromise?: Promise<User | null>;
   private sessionChanges = 0;
+  private renewalPending = false;
   private disposed = false;
   private appStateListener?: PluginListenerHandle;
   private readonly storageNamespace: string;
@@ -75,7 +76,11 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
   }
 
   override signinSilent(args: SigninSilentArgs = {}): Promise<User | null> {
-    if (this.sessionChanges || this.disposed) return Promise.resolve(null);
+    if (this.disposed) return Promise.resolve(null);
+    if (this.sessionChanges) {
+      this.renewalPending = this.settings.automaticSilentRenew;
+      return Promise.resolve(null);
+    }
     if (!this.refreshPromise) {
       const refresh = this.performSilentSignin(args);
       this.refreshPromise = refresh.finally(() => {
@@ -176,8 +181,12 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
   }
 
   private checkForAutomaticRenewal(): void {
-    if (this.sessionChanges || this.disposed || !this.settings.automaticSilentRenew || this.automaticRenewalPromise)
+    if (this.disposed || !this.settings.automaticSilentRenew) return;
+    if (this.sessionChanges) {
+      this.renewalPending = true;
       return;
+    }
+    if (this.automaticRenewalPromise) return;
     const renewal = this.getValidUser();
     this.automaticRenewalPromise = renewal;
     void renewal
@@ -197,6 +206,10 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
       return await operation();
     } finally {
       this.sessionChanges--;
+      if (!this.sessionChanges && this.renewalPending) {
+        this.renewalPending = false;
+        this.checkForAutomaticRenewal();
+      }
     }
   }
 
