@@ -100,6 +100,29 @@ public final class CapacitorOidcPluginTest {
     }
 
     @Test
+    public void ignoresStaleSigninFallbackDuringSignout() {
+        CapacitorOidcPlugin plugin = new CapacitorOidcPlugin();
+        RecordingCall first = new RecordingCall("signin-state", false);
+        plugin.beginAuth(first, uri("capacitor-oidc-example", null, "/callback", null));
+        plugin.cancel(new RecordingCall());
+
+        RecordingCall current = new RecordingCall("signout-state", false);
+        plugin.beginAuth(current, uri("capacitor-oidc-example", null, "/logout", null));
+        plugin.handleAuthResult(AuthTabIntent.RESULT_CANCELED, null);
+        deliver(plugin, callback("signin-state", false), true);
+        plugin.handleOnResume();
+        assertNull(current.result);
+        assertFalse(current.rejected);
+
+        Uri signout = uri("capacitor-oidc-example", null, "/logout",
+            "capacitor-oidc-example:/logout?state=signout-state");
+        when(signout.getQueryParameter("state")).thenReturn("signout-state");
+        deliver(plugin, signout, true);
+        assertNotNull(current.result);
+        assertFalse(current.rejected);
+    }
+
+    @Test
     public void explicitCancelRetiresState() {
         CapacitorOidcPlugin plugin = new CapacitorOidcPlugin();
         Uri expected = uri("capacitor-oidc-example", null, "/callback", null);

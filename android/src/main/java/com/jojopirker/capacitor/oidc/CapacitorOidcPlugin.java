@@ -95,8 +95,8 @@ public final class CapacitorOidcPlugin extends Plugin {
     protected void handleOnNewIntent(Intent intent) {
         Uri callback = intent.getData();
         PluginCall call = pendingAuthCall;
-        if (call == null || callback == null || !CallbackUriMatcher.matches(callback, pendingCallback)) return;
-        if (!matchesPendingState(callback)) {
+        if (call == null || callback == null) return;
+        if (!CallbackUriMatcher.matches(callback, pendingCallback) || !matchesPendingState(callback)) {
             // The fallback cancellation belongs to the stale callback, not the active flow.
             cancellationPending = false;
             return;
