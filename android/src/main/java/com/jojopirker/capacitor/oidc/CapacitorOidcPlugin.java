@@ -96,7 +96,11 @@ public final class CapacitorOidcPlugin extends Plugin {
         Uri callback = intent.getData();
         PluginCall call = pendingAuthCall;
         if (call == null || callback == null || !CallbackUriMatcher.matches(callback, pendingCallback)) return;
-        if (!matchesPendingState(callback)) return;
+        if (!matchesPendingState(callback)) {
+            // The fallback cancellation belongs to the stale callback, not the active flow.
+            cancellationPending = false;
+            return;
+        }
 
         clearPendingAuth();
         JSObject response = new JSObject();
@@ -200,7 +204,10 @@ public final class CapacitorOidcPlugin extends Plugin {
             cancellationPending = true;
             return;
         }
-        if (resultUri != null && !matchesPendingState(resultUri)) return;
+        if (resultUri != null && !matchesPendingState(resultUri)) {
+            cancellationPending = false;
+            return;
+        }
         clearPendingAuth();
         if (resultCode != AuthTabIntent.RESULT_OK || resultUri == null) {
             call.reject("The browser did not return a valid callback.", INVALID_CALLBACK);

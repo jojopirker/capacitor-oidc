@@ -86,7 +86,9 @@ public final class CapacitorOidcPluginTest {
 
         RecordingCall current = new RecordingCall("flow-b", fragment);
         plugin.beginAuth(current, expected);
+        if (fallback) plugin.handleAuthResult(AuthTabIntent.RESULT_CANCELED, null);
         deliver(plugin, callback("flow-a", fragment), fallback);
+        plugin.handleOnResume();
         deliver(plugin, callback(null, fragment), fallback);
         assertNull(current.result);
         assertFalse(current.rejected);
