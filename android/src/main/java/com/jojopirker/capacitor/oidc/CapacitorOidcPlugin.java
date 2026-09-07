@@ -63,7 +63,7 @@ public final class CapacitorOidcPlugin extends Plugin {
             return;
         }
         if (!isSupportedCallback(callback)) {
-            call.reject("The callback URL must use HTTPS or a custom scheme.", INVALID_CALLBACK);
+            call.reject("The callback URL must be hierarchical and use HTTPS or a custom scheme.", INVALID_CALLBACK);
             return;
         }
 
@@ -265,6 +265,7 @@ public final class CapacitorOidcPlugin extends Plugin {
     }
 
     private static boolean isSupportedCallback(Uri uri) {
+        if (uri.isOpaque()) return false;
         String scheme = uri.getScheme();
         if (scheme == null || scheme.isEmpty() || "http".equalsIgnoreCase(scheme)) return false;
         return !"https".equalsIgnoreCase(scheme) || uri.getHost() != null;

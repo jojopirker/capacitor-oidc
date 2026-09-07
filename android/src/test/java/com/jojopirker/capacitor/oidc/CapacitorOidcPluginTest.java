@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
 import android.content.Intent;
@@ -14,6 +15,7 @@ import androidx.browser.auth.AuthTabIntent;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.PluginCall;
 import org.junit.Test;
+import org.mockito.MockedStatic;
 
 public final class CapacitorOidcPluginTest {
 
@@ -111,6 +113,27 @@ public final class CapacitorOidcPluginTest {
         assertFalse(current.rejected);
         deliver(plugin, callback("flow-b", false), false);
         assertNotNull(current.result);
+    }
+
+    @Test
+    public void rejectsOpaqueRedirectBeforeLaunching() {
+        CapacitorOidcPlugin plugin = new CapacitorOidcPlugin();
+        RecordingCall call = new RecordingCall("flow", false);
+        call.getData().put("url", "https://issuer.example/authorize");
+        call.getData().put("callbackUrl", "com.example.app:callback");
+        Uri request = uri("https", "issuer.example", "/authorize", null);
+        when(request.getHost()).thenReturn("issuer.example");
+        Uri redirect = uri("com.example.app", null, null, "com.example.app:callback");
+        when(redirect.isOpaque()).thenReturn(true);
+
+        try (MockedStatic<Uri> uris = mockStatic(Uri.class)) {
+            uris.when(() -> Uri.parse("https://issuer.example/authorize")).thenReturn(request);
+            uris.when(() -> Uri.parse("com.example.app:callback")).thenReturn(redirect);
+            plugin.open(call);
+        }
+
+        assertEquals("INVALID_CALLBACK", call.rejectionCode);
+        assertNull(call.result);
     }
 
     @Test
