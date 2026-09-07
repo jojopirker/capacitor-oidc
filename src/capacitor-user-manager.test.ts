@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { inspect } from 'node:util';
 import { ErrorResponse, User, UserManager } from 'oidc-client-ts';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -406,7 +407,10 @@ describe('CapacitorUserManager', () => {
       expires_at: 1,
     });
     restoreOnCreate(user);
-    const error = new Error('network unavailable');
+    const error = Object.assign(new Error('network failure with secret-verifier'), {
+      cause: new Error('secret-verifier'),
+      code_verifier: 'secret-verifier',
+    });
     let rejectRefresh!: (error: Error) => void;
     const upstreamRefresh = new Promise<User>((_resolve, reject) => {
       rejectRefresh = reject;
@@ -417,7 +421,13 @@ describe('CapacitorUserManager', () => {
     const silentRenewError = vi.fn();
     const removeListener = manager.events.addSilentRenewError(silentRenewError);
     rejectRefresh(error);
-    await vi.waitFor(() => expect(silentRenewError).toHaveBeenCalledWith(error));
+    await vi.waitFor(() => expect(silentRenewError).toHaveBeenCalledOnce());
+    const publicError = silentRenewError.mock.calls[0][0];
+    expect(publicError).toBeInstanceOf(Error);
+    expect(publicError).not.toBe(error);
+    expect(publicError.message).toBe('Silent renewal failed');
+    expect(inspect(publicError, { showHidden: true })).not.toContain('secret-verifier');
+    expect(JSON.stringify({ ...publicError })).not.toContain('secret-verifier');
 
     expect(storage.get(storedUserKey())).toBe(user.toStorageString());
     removeListener();
@@ -434,7 +444,17 @@ describe('CapacitorUserManager', () => {
       expires_at: 1,
     });
     restoreOnCreate(user);
-    const error = new ErrorResponse({ error: 'invalid_grant' });
+    const protocol = {
+      error: 'invalid_grant',
+      error_description: 'Refresh token expired',
+      error_uri: 'https://issuer.example/errors/invalid_grant',
+    };
+    const form = new URLSearchParams({
+      refresh_token: 'secret-refresh-token',
+      code: 'secret-authorization-code',
+      code_verifier: 'secret-verifier',
+    });
+    const error = new ErrorResponse({ ...protocol, userState: { form } }, form);
     let rejectRefresh!: (error: ErrorResponse) => void;
     const upstreamRefresh = new Promise<User>((_resolve, reject) => {
       rejectRefresh = reject;
@@ -445,12 +465,52 @@ describe('CapacitorUserManager', () => {
     const silentRenewError = vi.fn();
     const removeListener = manager.events.addSilentRenewError(silentRenewError);
     rejectRefresh(error);
-    await vi.waitFor(() => expect(silentRenewError).toHaveBeenCalledWith(error));
+    await vi.waitFor(() => expect(silentRenewError).toHaveBeenCalledOnce());
+    const publicError = silentRenewError.mock.calls[0][0];
+    expect(publicError).toBeInstanceOf(Error);
+    expect(publicError).not.toBe(error);
+    expect(publicError.message).toBe('Silent renewal failed');
+    expect({ ...publicError }).toEqual(protocol);
+    expect(publicError).not.toHaveProperty('form');
+    expect(publicError).not.toHaveProperty('state');
+    for (const secret of form.values()) {
+      expect(inspect(publicError, { showHidden: true })).not.toContain(secret);
+      expect(JSON.stringify({ ...publicError })).not.toContain(secret);
+    }
+    expect(error.form).toBe(form);
 
     expect(storage.has(storedUserKey())).toBe(false);
     expect(setSessionSnapshot).toHaveBeenLastCalledWith({ namespace: 'default', value: null });
     removeListener();
     refresh.mockRestore();
+    await manager.dispose();
+  });
+
+  it('sanitizes upstream renewal events on web', async () => {
+    runtime.platform = 'web';
+    const manager = await CapacitorUserManager.create({
+      common: {
+        authority: settings.authority,
+        client_id: 'web-renewal-error',
+        automaticSilentRenew: false,
+      },
+      web: { settings: { redirect_uri: 'https://app.example/callback' } },
+    });
+    const error = new ErrorResponse(
+      { error: 'invalid_grant' },
+      new URLSearchParams({ refresh_token: 'secret-web-refresh-token' }),
+    );
+    const silentRenewError = vi.fn();
+    manager.events.addSilentRenewError(silentRenewError);
+
+    await manager.events._raiseSilentRenewError(error);
+
+    const publicError = silentRenewError.mock.calls[0][0];
+    expect(publicError).not.toBe(error);
+    expect(publicError).toMatchObject({ error: 'invalid_grant', message: 'Silent renewal failed' });
+    expect(publicError).not.toHaveProperty('form');
+    expect(inspect(publicError, { showHidden: true })).not.toContain('secret-web-refresh-token');
+    expect(JSON.stringify({ ...publicError })).not.toContain('secret-web-refresh-token');
     await manager.dispose();
   });
 
