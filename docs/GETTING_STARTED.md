@@ -117,10 +117,15 @@ auth.events.addUserLoaded((user) => {
   console.log('Signed in as', user.profile.sub);
 });
 
-auth.events.addSilentRenewError((error) => {
-  console.error('Token renewal failed', error);
+auth.events.addSilentRenewError(() => {
+  console.error('Token renewal failed');
 });
 ```
+
+Avoid logging raw authentication errors. Upstream errors can include submitted
+credentials in their request form. Renewal error events emit a fresh error with a
+generic message and the protocol fields `error`, `error_description`, and
+`error_uri` when available.
 
 ## 6. Get a usable access token
 
