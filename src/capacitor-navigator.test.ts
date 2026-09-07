@@ -1,11 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  CapacitorNavigator,
-  assertSecureRequestUrl,
-  callbackUrlFromRequest,
-  isExpectedCallback,
-} from './capacitor-navigator';
+import { CapacitorNavigator, callbackUrlFromRequest, isExpectedCallback } from './capacitor-navigator';
+import { assertSecureRequestUrl } from './transport-policy';
 
 const { open } = vi.hoisted(() => ({
   open: vi.fn(async ({ callbackUrl }: { callbackUrl: string }) => ({ url: `${callbackUrl}?code=code&state=state` })),

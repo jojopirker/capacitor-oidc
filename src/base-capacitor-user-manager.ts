@@ -3,6 +3,7 @@ import { UserManager, type INavigator, type SigninResourceOwnerCredentialsArgs, 
 import type { ResolvedUserManagerConfiguration } from './configuration.js';
 import type { CapacitorSigninArgs, CapacitorSignoutArgs } from './definitions.js';
 import { unsupported } from './errors.js';
+import { assertSecureSettings, secureMetadataService } from './transport-policy.js';
 
 export abstract class BaseCapacitorUserManager extends UserManager {
   private readonly signinMode: 'popup' | 'redirect';
@@ -16,7 +17,9 @@ export abstract class BaseCapacitorUserManager extends UserManager {
     popupNavigator?: INavigator,
     iframeNavigator?: INavigator,
   ) {
+    assertSecureSettings(configuration.settings);
     super(configuration.settings, redirectNavigator, popupNavigator, iframeNavigator);
+    secureMetadataService(this.metadataService);
     this.signinMode = configuration.signinMode;
     this.signoutMode = configuration.signoutMode;
     this.defaultSigninArgs = configuration.signinArgs;
