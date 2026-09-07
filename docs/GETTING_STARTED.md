@@ -140,6 +140,10 @@ concurrent renewal triggers share the same request. Native renewal requires a
 refresh token and never falls back to an iframe; web renewal retains the normal
 browser behavior, including independent concurrent calls.
 
+Native session changes wait for existing renewal work. Silent sign-in attempts
+during sign-in, sign-out, local removal, or after disposal return `null` without
+starting a refresh request.
+
 ## 7. Sign out and dispose
 
 ```ts
