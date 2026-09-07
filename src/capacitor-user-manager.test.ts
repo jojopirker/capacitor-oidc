@@ -347,6 +347,123 @@ describe('CapacitorUserManager', () => {
     refresh.mockRestore();
   });
 
+  it.each(['signin', 'removeUser', 'signout', 'dispose'] as const)(
+    'blocks a late refresh while %s changes the session',
+    async (operation) => {
+      const oldUser = new User({
+        access_token: 'old-access',
+        refresh_token: 'old-refresh',
+        token_type: 'Bearer',
+        profile: { sub: 'old-subject' },
+        expires_at: futureExpiration,
+      });
+      const newUser = new User({
+        access_token: 'new-access',
+        refresh_token: 'new-refresh',
+        token_type: 'Bearer',
+        profile: { sub: 'new-subject' },
+        expires_at: futureExpiration,
+      });
+      restoreOnCreate(oldUser);
+      const manager = await CapacitorUserManager.create(nativeConfiguration(settings));
+      let releaseOperation!: () => void;
+      const operationDelay = new Promise<void>((resolve) => {
+        releaseOperation = resolve;
+      });
+      let releaseRefresh!: () => void;
+      const refreshDelay = new Promise<void>((resolve) => {
+        releaseRefresh = resolve;
+      });
+      const refresh = vi.spyOn(UserManager.prototype, 'signinSilent').mockImplementation(async () => {
+        await refreshDelay;
+        await manager.storeUser(oldUser);
+        return oldUser;
+      });
+      const signin = vi.spyOn(UserManager.prototype, 'signinPopup').mockImplementation(async () => {
+        await operationDelay;
+        await manager.storeUser(newUser);
+        return newUser;
+      });
+      const remove = vi.spyOn(UserManager.prototype, 'removeUser').mockImplementation(async () => {
+        await operationDelay;
+        await manager.storeUser(null);
+      });
+      const signout = vi.spyOn(UserManager.prototype, 'signoutPopup').mockImplementation(async () => {
+        await operationDelay;
+        await manager.removeUser();
+      });
+      appState.remove.mockReturnValue(operationDelay);
+
+      const change = manager[operation]();
+      await vi.waitFor(() => {
+        const started =
+          operation === 'signin'
+            ? signin
+            : operation === 'removeUser'
+              ? remove
+              : operation === 'signout'
+                ? signout
+                : appState.remove;
+        expect(started).toHaveBeenCalledTimes(1);
+      });
+      let refreshSettled = false;
+      const renewal = manager.signinSilent().then((user) => {
+        refreshSettled = true;
+        return user;
+      });
+      await vi.waitFor(() => expect(refreshSettled || refresh.mock.calls.length > 0).toBe(true));
+      releaseOperation();
+      await change;
+      releaseRefresh();
+      await renewal;
+
+      const expectedUser = operation === 'signin' ? newUser : operation === 'dispose' ? oldUser : null;
+      expect((await manager.getUser())?.access_token ?? null).toBe(expectedUser?.access_token ?? null);
+      if (operation !== 'dispose') {
+        expect(JSON.parse(setSessionSnapshot.mock.lastCall?.[0].value ?? 'null')?.accessToken ?? null).toBe(
+          expectedUser?.access_token ?? null,
+        );
+      } else {
+        await expect(manager.signinSilent()).resolves.toBeNull();
+      }
+      expect(refresh).not.toHaveBeenCalled();
+      refresh.mockRestore();
+      signin.mockRestore();
+      remove.mockRestore();
+      signout.mockRestore();
+      await manager.dispose();
+    },
+  );
+
+  it('replays blocked renewal after the final session change fails', async () => {
+    const manager = await CapacitorUserManager.create(nativeConfiguration(automaticSettings));
+    // Finish the startup check before exercising resume admission.
+    await manager.removeUser();
+    const check = vi.spyOn(manager, 'getValidUser').mockResolvedValue(null);
+    let rejectSignin!: (error: Error) => void;
+    const signin = vi.spyOn(UserManager.prototype, 'signinPopup').mockReturnValue(
+      new Promise<User>((_, reject) => {
+        rejectSignin = reject;
+      }),
+    );
+    const signingIn = manager.signin();
+    const failedSignin = expect(signingIn).rejects.toThrow('cancelled');
+    await vi.waitFor(() => expect(signin).toHaveBeenCalledTimes(1));
+    await manager.removeUser();
+    appState.listener?.({ isActive: true });
+    expect(check).not.toHaveBeenCalled();
+    await expect(manager.signinSilent()).resolves.toBeNull();
+
+    rejectSignin(new Error('cancelled'));
+    await failedSignin;
+    expect(check).toHaveBeenCalledTimes(1);
+    await manager.dispose();
+    appState.listener?.({ isActive: true });
+    expect(check).toHaveBeenCalledTimes(1);
+    signin.mockRestore();
+    check.mockRestore();
+  });
+
   it('does not refresh a valid restored user', async () => {
     const user = new User({
       access_token: 'access',

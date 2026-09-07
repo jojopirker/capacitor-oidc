@@ -25,6 +25,9 @@ import { NativeOidc } from './native.js';
 export class NativeCapacitorUserManager extends CapacitorUserManager {
   private automaticRenewalPromise?: Promise<User | null>;
   private refreshPromise?: Promise<User | null>;
+  private sessionChanges = 0;
+  private renewalPending = false;
+  private disposed = false;
   private appStateListener?: PluginListenerHandle;
   private readonly storageNamespace: string;
 
@@ -64,17 +67,20 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
     this.checkForAutomaticRenewal();
   }
 
-  override async signinPopup(args: SigninPopupArgs = {}): Promise<User> {
-    await this.waitForRenewal();
-    return super.signinPopup(args);
+  override signinPopup(args: SigninPopupArgs = {}): Promise<User> {
+    return this.changeSession(() => super.signinPopup(args));
   }
 
-  override async signoutPopup(args: SignoutPopupArgs = {}): Promise<void> {
-    await this.waitForRenewal();
-    await super.signoutPopup(args);
+  override signoutPopup(args: SignoutPopupArgs = {}): Promise<void> {
+    return this.changeSession(() => super.signoutPopup(args));
   }
 
   override signinSilent(args: SigninSilentArgs = {}): Promise<User | null> {
+    if (this.disposed) return Promise.resolve(null);
+    if (this.sessionChanges) {
+      this.renewalPending = this.settings.automaticSilentRenew;
+      return Promise.resolve(null);
+    }
     if (!this.refreshPromise) {
       const refresh = this.performSilentSignin(args);
       this.refreshPromise = refresh.finally(() => {
@@ -84,9 +90,13 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
     return this.refreshPromise;
   }
 
-  override async removeUser(): Promise<void> {
-    await this.waitForRenewal();
-    await this.removeUserWithoutWaiting();
+  override removeUser(): Promise<void> {
+    return this.changeSession(() => this.removeUserWithoutWaiting());
+  }
+
+  override dispose(): Promise<void> {
+    this.disposed = true;
+    return this.changeSession(() => super.dispose());
   }
 
   override async signinRedirect(_args: SigninRedirectArgs = {}): Promise<void> {
@@ -151,7 +161,6 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
 
   protected override async disposePlatform(): Promise<void> {
     await this.appStateListener?.remove();
-    await this.waitForRenewal();
   }
 
   private async performSilentSignin(args: SigninSilentArgs): Promise<User | null> {
@@ -172,7 +181,12 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
   }
 
   private checkForAutomaticRenewal(): void {
-    if (!this.settings.automaticSilentRenew || this.automaticRenewalPromise) return;
+    if (this.disposed || !this.settings.automaticSilentRenew) return;
+    if (this.sessionChanges) {
+      this.renewalPending = true;
+      return;
+    }
+    if (this.automaticRenewalPromise) return;
     const renewal = this.getValidUser();
     this.automaticRenewalPromise = renewal;
     void renewal
@@ -182,6 +196,21 @@ export class NativeCapacitorUserManager extends CapacitorUserManager {
       .finally(() => {
         if (this.automaticRenewalPromise === renewal) this.automaticRenewalPromise = undefined;
       });
+  }
+
+  private async changeSession<T>(operation: () => Promise<T>): Promise<T> {
+    // Close admission before yielding so later renewals cannot race this operation.
+    this.sessionChanges++;
+    try {
+      await this.waitForRenewal();
+      return await operation();
+    } finally {
+      this.sessionChanges--;
+      if (!this.sessionChanges && this.renewalPending) {
+        this.renewalPending = false;
+        this.checkForAutomaticRenewal();
+      }
+    }
   }
 
   private async waitForRenewal(): Promise<void> {
