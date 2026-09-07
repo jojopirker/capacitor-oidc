@@ -50,7 +50,7 @@ final class AuthenticationFlowTests: XCTestCase {
             }
             XCTAssertTrue(
                 webView.waitForExistence(timeout: timeout),
-                "SpringBoard:\n\(springboard.debugDescription)\nBrowser:\n\(browser.debugDescription)"
+                "App:\n\(app.debugDescription)\nSpringBoard:\n\(springboard.debugDescription)\nBrowser:\n\(browser.debugDescription)"
             )
             return browser.textFields["Username or email"]
         }
