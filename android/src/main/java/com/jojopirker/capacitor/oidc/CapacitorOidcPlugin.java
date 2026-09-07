@@ -14,6 +14,7 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.List;
+import java.util.Objects;
 import org.json.JSONObject;
 
 @CapacitorPlugin(name = "CapacitorOidc")
@@ -28,6 +29,8 @@ public final class CapacitorOidcPlugin extends Plugin {
     private ActivityResultLauncher<Intent> authLauncher;
     private PluginCall pendingAuthCall;
     private Uri pendingCallback;
+    private String pendingState;
+    private String pendingResponseMode;
     private boolean cancellationPending;
     private TokenVault vault;
 
@@ -93,6 +96,7 @@ public final class CapacitorOidcPlugin extends Plugin {
         Uri callback = intent.getData();
         PluginCall call = pendingAuthCall;
         if (call == null || callback == null || !CallbackUriMatcher.matches(callback, pendingCallback)) return;
+        if (!matchesPendingState(callback)) return;
 
         clearPendingAuth();
         JSObject response = new JSObject();
@@ -196,6 +200,7 @@ public final class CapacitorOidcPlugin extends Plugin {
             cancellationPending = true;
             return;
         }
+        if (resultUri != null && !matchesPendingState(resultUri)) return;
         clearPendingAuth();
         if (resultCode != AuthTabIntent.RESULT_OK || resultUri == null) {
             call.reject("The browser did not return a valid callback.", INVALID_CALLBACK);
@@ -214,12 +219,27 @@ public final class CapacitorOidcPlugin extends Plugin {
     void beginAuth(PluginCall call, Uri callback) {
         pendingAuthCall = call;
         pendingCallback = callback;
+        pendingState = call.getString("state");
+        pendingResponseMode = call.getString("responseMode");
         cancellationPending = false;
+    }
+
+    private boolean matchesPendingState(Uri callback) {
+        if (callback.isOpaque()) return false;
+        if ("fragment".equals(pendingResponseMode)) {
+            callback = callback.buildUpon().encodedQuery(callback.getEncodedFragment()).fragment(null).build();
+        }
+        String state = callback.getQueryParameter("state");
+        // oidc-client-ts appends optional url_state after the transaction ID.
+        if (state != null) state = state.split(";", 2)[0];
+        return Objects.equals(pendingState, state);
     }
 
     private void clearPendingAuth() {
         pendingAuthCall = null;
         pendingCallback = null;
+        pendingState = null;
+        pendingResponseMode = null;
         cancellationPending = false;
     }
 
