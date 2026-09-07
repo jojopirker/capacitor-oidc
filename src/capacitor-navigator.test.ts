@@ -32,6 +32,21 @@ describe('CapacitorNavigator', () => {
     expect(open).toHaveBeenCalledWith({
       url,
       callbackUrl: 'com.example.app:/callback',
+      state: undefined,
+      responseMode: undefined,
+      prefersEphemeralWebBrowserSession: false,
+    });
+  });
+
+  it.each(['query', 'fragment'] as const)('passes state and %s response mode to native', async (response_mode) => {
+    const window = await new CapacitorNavigator(false).prepare();
+    await window.navigate({ url, state: 'transaction-id', response_mode });
+
+    expect(open).toHaveBeenCalledWith({
+      url,
+      callbackUrl: 'com.example.app:/callback',
+      state: 'transaction-id',
+      responseMode: response_mode,
       prefersEphemeralWebBrowserSession: false,
     });
   });
@@ -43,6 +58,8 @@ describe('CapacitorNavigator', () => {
     expect(open).toHaveBeenCalledWith({
       url,
       callbackUrl: 'com.example.app:/callback',
+      state: undefined,
+      responseMode: undefined,
       prefersEphemeralWebBrowserSession: true,
     });
   });
