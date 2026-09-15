@@ -147,6 +147,10 @@ jobs:
           xcrun simctl boot "$simulator_id"
           xcrun simctl bootstatus "$simulator_id" -b
           xcrun simctl keychain "$simulator_id" add-root-cert "$RUNNER_TEMP/keycloak-tls/ca.crt"
+          # Restart first-boot trust services before the app makes TLS requests.
+          xcrun simctl shutdown "$simulator_id"
+          xcrun simctl boot "$simulator_id"
+          xcrun simctl bootstatus "$simulator_id" -b
       - name: Run authentication flow
         run: >-
           xcodebuild
