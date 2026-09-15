@@ -1,4 +1,10 @@
-import { UserManager, type INavigator, type SigninResourceOwnerCredentialsArgs, type User } from 'oidc-client-ts';
+import {
+  ErrorResponse,
+  UserManager,
+  type INavigator,
+  type SigninResourceOwnerCredentialsArgs,
+  type User,
+} from 'oidc-client-ts';
 
 import type { ResolvedUserManagerConfiguration } from './configuration.js';
 import type { CapacitorSigninArgs, CapacitorSignoutArgs } from './definitions.js';
@@ -17,6 +23,18 @@ export abstract class BaseCapacitorUserManager extends UserManager {
     iframeNavigator?: INavigator,
   ) {
     super(configuration.settings, redirectNavigator, popupNavigator, iframeNavigator);
+    const raiseSilentRenewError = this.events._raiseSilentRenewError.bind(this.events);
+    this.events._raiseSilentRenewError = (error: Error) => {
+      const publicError = new Error('Silent renewal failed');
+      if (error instanceof ErrorResponse) {
+        Object.assign(publicError, {
+          error: error.error,
+          error_description: error.error_description,
+          error_uri: error.error_uri,
+        });
+      }
+      return raiseSilentRenewError(publicError);
+    };
     this.signinMode = configuration.signinMode;
     this.signoutMode = configuration.signoutMode;
     this.defaultSigninArgs = configuration.signinArgs;
