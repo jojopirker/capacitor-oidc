@@ -1,7 +1,16 @@
-import { type QuerySessionStatusArgs, type SessionStatus, type User } from 'oidc-client-ts';
+import {
+  type CreateSigninRequestArgs,
+  type CreateSignoutRequestArgs,
+  type IWindow,
+  type NavigateResponse,
+  type QuerySessionStatusArgs,
+  type SessionStatus,
+  type User,
+} from 'oidc-client-ts';
 
 import { CapacitorUserManager } from './capacitor-user-manager.js';
 import type { ResolvedUserManagerConfiguration } from './configuration.js';
+import { assertSecureRequestUrl } from './transport-policy.js';
 
 interface SessionMonitorLifecycle {
   start(user: User): Promise<void>;
@@ -20,6 +29,17 @@ export class WebCapacitorUserManager extends CapacitorUserManager {
   constructor(configuration: ResolvedUserManagerConfiguration) {
     super(configuration);
     this.sessionMonitor = this.captureSessionMonitor();
+  }
+
+  protected override _signinStart(args: CreateSigninRequestArgs, handle: IWindow): Promise<NavigateResponse> {
+    return super._signinStart(args, secureWindow(handle));
+  }
+
+  protected override _signoutStart(
+    args: CreateSignoutRequestArgs | undefined,
+    handle: IWindow,
+  ): Promise<NavigateResponse> {
+    return super._signoutStart(args, secureWindow(handle));
   }
 
   override async querySessionStatus(args: QuerySessionStatusArgs = {}): Promise<SessionStatus | null> {
@@ -55,4 +75,14 @@ export class WebCapacitorUserManager extends CapacitorUserManager {
     monitor._start = start;
     return { start, stop };
   }
+}
+
+function secureWindow(handle: IWindow): IWindow {
+  return {
+    navigate: async (params) => {
+      assertSecureRequestUrl(params.url);
+      return handle.navigate(params);
+    },
+    close: () => handle.close(),
+  };
 }

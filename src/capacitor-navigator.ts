@@ -2,6 +2,7 @@ import type { INavigator, IWindow, NavigateParams, NavigateResponse } from 'oidc
 
 import { CapacitorOidcError, unsupported } from './errors.js';
 import { NativeOidc } from './native.js';
+import { assertSecureRequestUrl } from './transport-policy.js';
 
 export class CapacitorNavigator implements INavigator {
   constructor(private readonly prefersEphemeralWebBrowserSession: boolean) {}
@@ -39,16 +40,6 @@ class CapacitorWindow implements IWindow {
 
   close(): void {
     void NativeOidc.cancel();
-  }
-}
-
-export function assertSecureRequestUrl(requestUrl: string): void {
-  const url = new URL(requestUrl);
-  const isHttpLoopback =
-    url.protocol === 'http:' &&
-    (url.hostname === 'localhost' || url.hostname === '127.0.0.1' || url.hostname === '[::1]');
-  if (url.protocol !== 'https:' && !isHttpLoopback) {
-    throw new CapacitorOidcError('BROWSER_UNAVAILABLE', 'OIDC authorization and logout endpoints must use HTTPS');
   }
 }
 
