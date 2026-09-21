@@ -16,13 +16,6 @@ runtime, the provider must allow the configured Capacitor origin to call those
 endpoints. Request `offline_access`, or the provider's equivalent, when the app
 needs refresh tokens. Use HTTPS outside local test environments.
 
-## Test status
-
-The basic Amazon Cognito sign-in flow has been tested on a physical iOS device.
-The Auth0, Keycloak, Okta, and Microsoft Entra ID sections document expected
-configuration, but those recipes are not yet covered by the package's provider
-integration tests.
-
 ## Amazon Cognito
 
 Cognito separates the OIDC issuer from the managed-login domain. Use the user

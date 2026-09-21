@@ -28,10 +28,10 @@ refresh is not currently implemented; see
 
 `oidc-client-ts` requires `crypto.subtle` and `crypto.getRandomValues`.
 `CapacitorUserManager.create()` rejects with `UNSUPPORTED_RUNTIME` when they are
-absent. Their behavior must be verified in packaged applications on supported
-physical devices.
+absent. The packaged iOS and Android example tests exercise this requirement in
+CI.
 
-See [Testing](docs/TESTING.md) for current platform and provider coverage.
+See [Testing](docs/TESTING.md) for the automated coverage.
 
 ## Known issues
 

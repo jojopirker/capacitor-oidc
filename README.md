@@ -103,7 +103,7 @@ callback route, call `signinCallback()`; on the web logout callback route, call
 `signoutCallback()`. The package detects the runtime and applies `common`, then
 `web` or `native`, then the matching `ios` or `android` override.
 
-A runnable Keycloak-backed iOS application and its UI test live in
+A runnable Keycloak-backed application and its iOS and Android UI tests live in
 [`example`](example/).
 
 ## Documentation
@@ -114,7 +114,7 @@ A runnable Keycloak-backed iOS application and its UI test live in
 - [API and `oidc-client-ts` compatibility](https://jojopirker.github.io/capacitor-oidc/docs/API)
 - [Sessions, secure storage, and widgets](https://jojopirker.github.io/capacitor-oidc/docs/SESSIONS_AND_WIDGETS)
 - [Troubleshooting](https://jojopirker.github.io/capacitor-oidc/docs/TROUBLESHOOTING)
-- [Testing status](https://jojopirker.github.io/capacitor-oidc/docs/TESTING)
+- [Testing](https://jojopirker.github.io/capacitor-oidc/docs/TESTING)
 - [Security](https://jojopirker.github.io/capacitor-oidc/SECURITY)
 
 ## Development
