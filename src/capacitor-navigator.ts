@@ -18,12 +18,14 @@ export class CapacitorNavigator implements INavigator {
 class CapacitorWindow implements IWindow {
   constructor(private readonly prefersEphemeralWebBrowserSession: boolean) {}
 
-  async navigate({ url }: NavigateParams): Promise<NavigateResponse> {
+  async navigate({ url, state, response_mode }: NavigateParams): Promise<NavigateResponse> {
     assertSecureRequestUrl(url);
     const callbackUrl = callbackUrlFromRequest(url);
     const response = await NativeOidc.open({
       url,
       callbackUrl,
+      state,
+      responseMode: response_mode,
       prefersEphemeralWebBrowserSession: this.prefersEphemeralWebBrowserSession,
     });
 

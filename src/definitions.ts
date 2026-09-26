@@ -115,6 +115,8 @@ export interface StoredSessionV1 {
 export interface NativeOpenOptions {
   url: string;
   callbackUrl: string;
+  state?: string;
+  responseMode?: 'query' | 'fragment';
   prefersEphemeralWebBrowserSession: boolean;
 }
 
